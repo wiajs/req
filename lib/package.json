@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "browser": {
+    "./adapters/http.js": "./helpers/null.js",
+    "./platform/node/index.js": "./platform/browser/index"
+  }
+}
