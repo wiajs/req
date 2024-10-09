@@ -1,93 +1,73 @@
-import gulp from 'gulp';
-import fs from 'fs-extra';
-import axios from './bin/githubAxios.js';
-import minimist from 'minimist'
+import gulp from 'gulp'
+import fs from 'fs-extra'
+import {build} from './script/build.js'
+import configs from './script/config.js'
+import axios from "./bin/githubAxios.js";
+import minimist from "minimist";
 
-const argv = minimist(process.argv.slice(2));
+const nodeEnv = process.env.NODE_ENV || 'development'
+const src = './src'
+const out = './dist'
 
-  gulp.task('default', async function(){
-  console.log('hello!');
-});
+console.log(`env:${nodeEnv} src:${src} out:${out}`)
 
-const clear = gulp.task('clear', async function() {
+if (!fs.existsSync(out)) {
+  fs.mkdirSync(out)
+}
+
+/**
+ * 删除已有发布文件，全部重新生成
+ * @returns
+ */
+async function clean(cb) {
+  // const toRemove = ['*.map'].map(cmd => `rm -rf ${cmd}`);
+  // await exec.promise(`cd dist && ${toRemove.join(' && ')}`);
   await fs.emptyDir('./dist/')
-});
-
-const bower = gulp.task('bower', async function () {
-  const npm = JSON.parse(await fs.readFile('package.json'));
-  const bower = JSON.parse(await fs.readFile('bower.json'));
-
-  const fields = [
-    'name',
-    'description',
-    'version',
-    'homepage',
-    'license',
-    'keywords'
-  ];
-
-  for (let i = 0, l = fields.length; i < l; i++) {
-    const field = fields[i];
-    bower[field] = npm[field];
-  }
-
-  await fs.writeFile('bower.json', JSON.stringify(bower, null, 2));
-});
-
-async function getContributors(user, repo, maxCount = 1) {
-  const contributors = (await axios.get(
-    `https://api.github.com/repos/${encodeURIComponent(user)}/${encodeURIComponent(repo)}/contributors`,
-    { params: { per_page: maxCount } }
-  )).data;
-
-  return Promise.all(contributors.map(async (contributor)=> {
-    return {...contributor, ...(await axios.get(
-      `https://api.github.com/users/${encodeURIComponent(contributor.login)}`
-    )).data};
-  }))
+  cb && cb()
 }
 
-const packageJSON = gulp.task('package', async function () {
-  const CONTRIBUTION_THRESHOLD = 3;
+/**
+ * 同时生成umd、cjs、esm 三种格式输出文件
+ */
+const buildAll = gulp.series(clean, cb => {
+  console.log('start build ...')
+  build(configs, cb)
+})
 
-  const npm = JSON.parse(await fs.readFile('package.json'));
+/**
+ * 仅生成cjs 格式
+ */
+gulp.task('cjs', cb => {
+  console.log('dev cjs...')
+  // filter configs
+  const cfg = configs.filter(c => c.output.format === 'cjs')
+  build(cfg, cb)
+})
 
-  try {
-    const contributors = await getContributors('axios', 'axios', 15);
+/**
+ * 仅生成 esm 格式
+ */
+gulp.task('esm', cb => {
+  console.log('dev esm...')
+  // filter configs
+  const cfg = configs.filter(c => c.output.format === 'esm')
+  build(cfg, cb)
+})
 
-    npm.contributors = contributors
-      .filter(
-        ({type, contributions}) => type.toLowerCase() === 'user' && contributions >= CONTRIBUTION_THRESHOLD
-      )
-      .map(({login, name, url}) => `${name || login} (https://github.com/${login})`);
+/**
+ * 仅生成 umd 格式
+ */
+gulp.task('umd', cb => {
+  console.log('dev umd...')
+  // filter configs
+  const cfg = configs.filter(c => c.output.format === 'umd')
+  build(cfg, cb)
+})
 
-    await fs.writeFile('package.json', JSON.stringify(npm, null, 2));
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response && err.response.status === 403) {
-      throw Error(`GitHub API Error: ${err.response.data && err.response.data.message}`);
-    }
-    throw err;
-  }
-});
+gulp.task('watch', () => {
+  gulp.watch(`${src}/*.js`, gulp.series([buildAll]))
+})
 
-const env = gulp.task('env', async function () {
-  var npm = JSON.parse(await fs.readFile('package.json'));
+export default buildAll
+export {buildAll as build}
 
-  const envFilePath = './lib/env/data.js';
-
-  await fs.writeFile(envFilePath, Object.entries({
-    VERSION: (argv.bump || npm.version).replace(/^v/, '')
-  }).map(([key, value]) => {
-    return `export const ${key} = ${JSON.stringify(value)};`
-  }).join('\n'));
-});
-
-const version = gulp.series('bower', 'env', 'package');
-
-export {
-  bower,
-  env,
-  clear,
-  version,
-  packageJSON
-}

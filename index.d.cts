@@ -540,6 +540,6 @@ declare namespace axios {
   }
 }
 
-declare const axios: axios.AxiosStatic;
+declare const req: axios.AxiosStatic;
 
-export = axios;
+export = req;

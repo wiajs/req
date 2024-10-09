@@ -6,6 +6,7 @@ node_modules/
 coverage/
 temp/
 test/typescript/axios.js*
+test/typescript/req.js*
 sauce_connect.log
 test/module/**/package-lock.json
 backup/

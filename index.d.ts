@@ -560,6 +560,6 @@ export interface AxiosStatic extends AxiosInstance {
   mergeConfig: typeof mergeConfig;
 }
 
-declare const axios: AxiosStatic;
+declare const req: AxiosStatic;
 
-export default axios;
+export default req;

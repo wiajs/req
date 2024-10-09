@@ -12,7 +12,7 @@
    <a href="https://axios-http.com"><img src="https://axios-http.com/assets/logo.svg" /></a><br>
 </div>
 
-<p align="center">Promise based HTTP client for the browser and node.js</p>
+<p align="center">Promise And Stream based AXIOS client for the browser and node.js</p>
 
 <p align="center">
     <a href="https://axios-http.com/"><b>Website</b></a> •
