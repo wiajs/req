@@ -5,6 +5,7 @@
 node_modules/
 coverage/
 temp/
+lib/
 test/typescript/axios.js*
 test/typescript/req.js*
 sauce_connect.log

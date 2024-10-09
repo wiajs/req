@@ -1,5 +1,3 @@
-'use strict';
-
 import utils from './utils.js';
 import bind from './helpers/bind.js';
 import Axios from './core/Axios.js';
@@ -14,7 +12,7 @@ import toFormData from './helpers/toFormData.js';
 import AxiosError from './core/AxiosError.js';
 import spread from './helpers/spread.js';
 import isAxiosError from './helpers/isAxiosError.js';
-import AxiosHeaders from "./core/AxiosHeaders.js";
+import AxiosHeaders from './core/AxiosHeaders.js';
 import adapters from './adapters/adapters.js';
 import HttpStatusCode from './helpers/HttpStatusCode.js';
 
@@ -44,46 +42,42 @@ function createInstance(defaultConfig) {
 }
 
 // Create the default instance to be exported
-const axios = createInstance(defaults);
+const req = createInstance(defaults);
 
 // Expose Axios class to allow class inheritance
-axios.Axios = Axios;
+req.Axios = Axios;
 
 // Expose Cancel & CancelToken
-axios.CanceledError = CanceledError;
-axios.CancelToken = CancelToken;
-axios.isCancel = isCancel;
-axios.VERSION = VERSION;
-axios.toFormData = toFormData;
+req.CanceledError = CanceledError;
+req.CancelToken = CancelToken;
+req.isCancel = isCancel;
+req.VERSION = VERSION;
+req.toFormData = toFormData;
 
 // Expose AxiosError class
-axios.AxiosError = AxiosError;
+req.AxiosError = AxiosError;
 
 // alias for CanceledError for backward compatibility
-axios.Cancel = axios.CanceledError;
+req.Cancel = req.CanceledError;
 
 // Expose all/spread
-axios.all = function all(promises) {
-  return Promise.all(promises);
-};
+req.all = promises => Promise.all(promises);
 
-axios.spread = spread;
+req.spread = spread;
 
 // Expose isAxiosError
-axios.isAxiosError = isAxiosError;
+req.isAxiosError = isAxiosError;
 
 // Expose mergeConfig
-axios.mergeConfig = mergeConfig;
+req.mergeConfig = mergeConfig;
 
-axios.AxiosHeaders = AxiosHeaders;
+req.AxiosHeaders = AxiosHeaders;
 
-axios.formToJSON = thing => formDataToJSON(utils.isHTMLForm(thing) ? new FormData(thing) : thing);
+req.formToJSON = thing => formDataToJSON(utils.isHTMLForm(thing) ? new FormData(thing) : thing);
 
-axios.getAdapter = adapters.getAdapter;
+req.getAdapter = adapters.getAdapter;
 
-axios.HttpStatusCode = HttpStatusCode;
-
-axios.default = axios;
+req.default = req;
 
 // this module should only have a default export
-export default axios
+export default req;
