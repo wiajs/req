@@ -7,10 +7,11 @@ import commonjs from "@rollup/plugin-commonjs"; // CommonJS 模块转换成 ES6
 import resolve from "@rollup/plugin-node-resolve"; // 导入node_modules 中的 CommonJS 模块
 import replace from "@rollup/plugin-replace"; // 替换待打包文件里的一些变量，如 process在浏览器端是不存在的，需要被替换
 import json from "@rollup/plugin-json";
+import autoExternal from 'rollup-plugin-auto-external';
 
 import { getJsOpt, getTsOpt } from "./swc.js";
 
-import pkg from "../package.json" assert { type: "json" };
+import pkg from "../package.json" with { type: "json" };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -50,14 +51,7 @@ const configs = [
 		input,
 		file: dir("dist/node/req.cjs"), // cjs格式，后端打包，保留引用
 		format: "cjs",
-		browser: false,
-		external,
-	},
-	{
-		input: esmInput,
-		file: dir("dist/node/req.mjs"), // esm格式，后端打包，保留引用
-		format: "esm",
-		exports: "named", // 名称方式输出各个子模块
+		exports: 'default', // 自动处理默认导出 auto 或 'default' named
 		browser: false,
 		external,
 	},
@@ -65,6 +59,7 @@ const configs = [
 		input,
 		file: dir("dist/web/req.cjs"), // cjs格式，web打包，合并引用
 		format: "cjs",
+		exports: 'default', // 自动处理默认导出 auto 或 'default' named
 		browser: true,
 		external: [],
 	},
@@ -94,7 +89,7 @@ const configs = [
  * @param {*} param0
  * @returns
  */
-function genConfig({ input, browser = true, es5 = false, ...cfg }) {
+function genConfig({ input, browser = false, es5 = false, ...cfg }) {
 	const config = {
 		input: {
 			input,
@@ -102,8 +97,12 @@ function genConfig({ input, browser = true, es5 = false, ...cfg }) {
 			// 插件，从上向下顺序执行
 			plugins: [
 				// node_modules 中超ES6已转换为ES6
-				resolve({ browser }), // 从 node_modules 合并文件，pkg的browser文件替换 mainFields: ['browser']
-				commonjs(), // common 转换为 es6，rollup 只支持 es6
+				resolve({ browser }), // 从 node_modules 合并文件，pkg的browser文件替换 mainFields: ['browser']				
+				commonjs({
+					esmExternals: true, // 强制对 ESM 模块添加 default 导出
+					// defaultIsModuleExports: true,  // 自动处理默认导出
+					// requireReturnsDefault: false
+				}), // common 转换为 es6，rollup 只支持 es6
         json(), // 加载json文件
 				// 替换特定字符串
 				replace({

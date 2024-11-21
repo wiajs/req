@@ -1,0 +1,6 @@
+export default ZlibHeaderTransformStream;
+declare class ZlibHeaderTransformStream extends stream.Transform {
+    __transform(chunk: any, encoding: any, callback: any): void;
+    _transform(chunk: any, encoding: any, callback: any): void;
+}
+import stream from "stream";

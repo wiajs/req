@@ -1,3 +1,5 @@
+import type Agent, {AgentOpts} from '@wiajs/agent';
+
 interface RawAxiosHeaders {
   [key: string]: axios.AxiosHeaderValue;
 }
@@ -123,11 +125,11 @@ declare class Axios {
   };
   getUri(config?: axios.AxiosRequestConfig): string;
   request<T = any, R = axios.AxiosResponse<T>, D = any>(config: axios.AxiosRequestConfig<D>): Promise<R>;
-  get<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, config?: axios.AxiosRequestConfig<D>): Promise<R>;
+  get<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, param?: D, config?: axios.AxiosRequestConfig<D>): Promise<R>;
+  post<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, data?: D, config?: axios.AxiosRequestConfig<D>): Promise<R>;
   delete<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, config?: axios.AxiosRequestConfig<D>): Promise<R>;
   head<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, config?: axios.AxiosRequestConfig<D>): Promise<R>;
   options<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, config?: axios.AxiosRequestConfig<D>): Promise<R>;
-  post<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, data?: D, config?: axios.AxiosRequestConfig<D>): Promise<R>;
   put<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, data?: D, config?: axios.AxiosRequestConfig<D>): Promise<R>;
   patch<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, data?: D, config?: axios.AxiosRequestConfig<D>): Promise<R>;
   postForm<T = any, R = axios.AxiosResponse<T>, D = any>(url: string, data?: D, config?: axios.AxiosRequestConfig<D>): Promise<R>;
@@ -403,7 +405,8 @@ declare namespace axios {
     transport?: any;
     httpAgent?: any;
     httpsAgent?: any;
-    proxy?: AxiosProxyConfig | false;
+    agent?: AgentOpts;
+    agents?: Agent;
     cancelToken?: CancelToken;
     decompress?: boolean;
     transitional?: TransitionalOptions;
@@ -450,6 +453,7 @@ declare namespace axios {
   }
 
   interface AxiosResponse<T = any, D = any>  {
+    body: T;
     data: T;
     status: number;
     statusText: string;

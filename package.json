@@ -1,15 +1,10 @@
 {
 	"name": "@wiajs/req",
-	"version": "1.7.7",
+	"version": "1.7.12",
 	"description": "Promise And Stream based AXIOS client for the browser and node.js",
 	"type": "module",
 	"types": "index.d.ts",
 	"main": "index.js",
-	"browser": {
-		"./lib/adapters/http.js": "./lib/helpers/null.js",
-		"./lib/platform/node/index.js": "./lib/platform/browser/index.js",
-		"./lib/platform/node/classes/FormData.js": "./lib/helpers/null.js"
-	},
 	"exports": {
 		".": {
 			"types": {
@@ -38,6 +33,11 @@
 		"./unsafe/utils.js": "./lib/utils.js",
 		"./package.json": "./package.json"
 	},
+	"browser": {
+		"./src/adapters/http.js": "./lib/helpers/null.js",
+		"./src/platform/node/index.js": "./lib/platform/browser/index.js",
+		"./src/platform/node/classes/FormData.js": "./lib/helpers/null.js"
+	},
 	"scripts": {
 		"test": "npm run test:eslint && npm run test:mocha && npm run test:karma && npm run test:dtslint && npm run test:exports",
 		"test:eslint": "node bin/ssl_hotfix.js eslint lib/**/*.js",
@@ -49,9 +49,9 @@
 		"test:karma:server": "node bin/ssl_hotfix.js cross-env karma start karma.conf.cjs",
 		"test:build:version": "node ./bin/check-build-version.js",
 		"start": "node ./sandbox/server.js",
-		"preversion": "gulp version",
+		"preversion-x": "gulp version",
 		"version": "npm run build && git add dist && git add package.json",
-		"prepublishOnly": "npm run test:build:version",
+		"prepublishOnly-x": "npm run test:build:version",
 		"postpublish": "git push && git push --tags",
 		"build-x": "gulp clear && cross-env NODE_ENV=production rollup -c -m",
 		"bin": "swc --config-file ./bin.swcrc ./src -d bin -w --strip-leading-paths",
@@ -60,7 +60,7 @@
 		"examples": "node ./examples/server.js",
 		"coveralls": "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
 		"fix": "eslint --fix lib/**/*.js",
-		"prepare": "husky install && npm run prepare:hooks",
+		"prepare-x": "husky install && npm run prepare:hooks",
 		"prepare:hooks": "npx husky set .husky/commit-msg \"npx commitlint --edit $1\"",
 		"release:dry": "release-it --dry-run --no-npm",
 		"release:info": "release-it --release-version",
@@ -76,11 +76,12 @@
 	},
 	"keywords": ["xhr", "http", "ajax", "promise", "stream", "node"],
 	"author": "Sibyl Yu <sibyl@wia.pub>",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/wiajs/req/issues"
-	},
+	"bugs": "https://github.com/wiajs/req/issues",
 	"homepage": "https://wiajs.pub/req",
+	"license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
 	"devDependencies": {
 		"@babel/core": "^7.23.9",
 		"@babel/preset-env": "^7.23.9",
@@ -141,9 +142,9 @@
 		"@rollup/plugin-alias": "^5.1.0"
 	},
 	"dependencies": {
-		"@wiajs/log": "^4.3.11",
-		"@wiajs/request": "^3.0.8",
-		"@wiajs/agent": "^1.0.13",
+		"@wiajs/log": "^4.3.19",
+		"@wiajs/request": "^3.0.20",
+		"@wiajs/agent": "^1.0.19",
 		"form-data": "^4.0.0",
 		"proxy-from-env": "^1.1.0"
 	},

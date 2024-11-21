@@ -1,4 +1,4 @@
-import {TextEncoder} from 'util';
+import {TextEncoder} from 'node:util';
 import {Readable} from 'stream';
 import utils from "../utils.js";
 import readBlob from "./readBlob.js";

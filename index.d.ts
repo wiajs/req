@@ -1,3 +1,5 @@
+import type Agent, {AgentOpts} from '@wiajs/agent';
+
 // TypeScript Version: 4.7
 export type AxiosHeaderValue = AxiosHeaders | string | string[] | number | boolean | null;
 
@@ -344,7 +346,8 @@ export interface AxiosRequestConfig<D = any> {
   transport?: any;
   httpAgent?: any;
   httpsAgent?: any;
-  proxy?: AxiosProxyConfig | false;
+  agent?: AgentOpts;
+  agents?: Agent;
   cancelToken?: CancelToken;
   decompress?: boolean;
   transitional?: TransitionalOptions;
@@ -391,6 +394,7 @@ export interface CreateAxiosDefaults<D = any> extends Omit<AxiosRequestConfig<D>
 }
 
 export interface AxiosResponse<T = any, D = any> {
+  body: T;
   data: T;
   status: number;
   statusText: string;
@@ -491,11 +495,11 @@ export class Axios {
   };
   getUri(config?: AxiosRequestConfig): string;
   request<T = any, R = AxiosResponse<T>, D = any>(config: AxiosRequestConfig<D>): Promise<R>;
-  get<T = any, R = AxiosResponse<T>, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+  get<T = any, R = AxiosResponse<T>, D = any>(url: string, param?: D, config?: AxiosRequestConfig<D>): Promise<R>;
+  post<T = any, R = AxiosResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
   delete<T = any, R = AxiosResponse<T>, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
   head<T = any, R = AxiosResponse<T>, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
   options<T = any, R = AxiosResponse<T>, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
-  post<T = any, R = AxiosResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
   put<T = any, R = AxiosResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
   patch<T = any, R = AxiosResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
   postForm<T = any, R = AxiosResponse<T>, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>;
