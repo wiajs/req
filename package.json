@@ -1,6 +1,6 @@
 {
 	"name": "@wiajs/req",
-	"version": "1.7.12",
+	"version": "1.7.28",
 	"description": "Promise And Stream based AXIOS client for the browser and node.js",
 	"type": "module",
 	"types": "index.d.ts",
@@ -143,8 +143,8 @@
 	},
 	"dependencies": {
 		"@wiajs/log": "^4.3.19",
-		"@wiajs/request": "^3.0.20",
-		"@wiajs/agent": "^1.0.19",
+		"@wiajs/request": "^3.0.32",
+		"@wiajs/agent": "^1.0.21",
 		"form-data": "^4.0.0",
 		"proxy-from-env": "^1.1.0"
 	},

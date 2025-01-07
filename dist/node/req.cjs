@@ -1,5 +1,5 @@
 /*!
-  * @wia/req v1.7.12
+  * @wia/req v1.7.28
   * (c) 2024 Sibyl Yu, Matt Zabriskie and contributors
   * Released under the MIT License.
   */
@@ -8,7 +8,7 @@
 const FormData$1 = require('form-data');
 const url = require('node:url');
 const request = require('@wiajs/request');
-const Agent = require('@wiajs/agent');
+const agent = require('@wiajs/agent');
 const log$1 = require('@wiajs/log');
 const util = require('node:util');
 const zlib = require('node:zlib');
@@ -1286,8 +1286,6 @@ class InterceptorManager {
   }
 }
 
-const InterceptorManager$1 = InterceptorManager;
-
 const transitionalDefaults = {
   silentJSONParsing: true,
   forcedJSONParsing: true,
@@ -1616,8 +1614,6 @@ const defaults = {
 utils$1.forEach(['delete', 'get', 'head', 'post', 'put', 'patch'], (method) => {
   defaults.headers[method] = {};
 });
-
-const defaults$1 = defaults;
 
 // RawAxiosHeaders whose duplicates are ignored by node
 // c.f. https://nodejs.org/api/http.html#http_message_headers
@@ -1981,8 +1977,6 @@ utils$1.reduceDescriptors(AxiosHeaders.prototype, ({value}, key) => {
 
 utils$1.freezeMethods(AxiosHeaders);
 
-const AxiosHeaders$1 = AxiosHeaders;
-
 /**
  * Transform the data for a request or a response
  *
@@ -1992,9 +1986,9 @@ const AxiosHeaders$1 = AxiosHeaders;
  * @returns {*} The resulting transformed data
  */
 function transformData(fns, response) {
-  const config = this || defaults$1;
+  const config = this || defaults;
   const context = response || config;
-  const headers = AxiosHeaders$1.from(context.headers);
+  const headers = AxiosHeaders.from(context.headers);
   let data = context.data;
 
   utils$1.forEach(fns, function transform(fn) {
@@ -2292,8 +2286,6 @@ class AxiosTransformStream extends stream.Transform {
   }
 }
 
-const AxiosTransformStream$1 = AxiosTransformStream;
-
 const {asyncIterator} = Symbol;
 
 const readBlob = async function* (blob) {
@@ -2307,8 +2299,6 @@ const readBlob = async function* (blob) {
     yield blob;
   }
 };
-
-const readBlob$1 = readBlob;
 
 const BOUNDARY_ALPHABET = utils$1.ALPHABET.ALPHA_DIGIT + '-_';
 
@@ -2351,7 +2341,7 @@ class FormDataPart {
     if(utils$1.isTypedArray(value)) {
       yield value;
     } else {
-      yield* readBlob$1(value);
+      yield* readBlob(value);
     }
 
     yield CRLF_BYTES;
@@ -2415,8 +2405,6 @@ const formDataToStream = (form, headersHandler, options) => {
   })());
 };
 
-const formDataToStream$1 = formDataToStream;
-
 const callbackify = (fn, reducer) => {
   return utils$1.isAsyncFn(fn) ? function (...args) {
     const cb = args.pop();
@@ -2429,8 +2417,6 @@ const callbackify = (fn, reducer) => {
     }, cb);
   } : fn;
 };
-
-const callbackify$1 = callbackify;
 
 /**
  * Calculate data maxRate
@@ -2608,20 +2594,20 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
  * 如需重新发起请求时，无需重新初始化
  */
 class HttpAdapter {
-  isDone = false;
-  rejected = false;
+  isDone = false
+  rejected = false
   /** @type {*} */
-  req = null;
+  req = null
   /** @type {*} */
-  config = null;
+  config = null
   /** @type {number} */
-  maxUploadRate;
+  maxUploadRate
   /** @type {number} */
-  maxDownloadRate;
+  maxDownloadRate
   /** @type {*} */
-  data = null;
+  data = null
   /** @type {*} */
-  transport = null;
+  transport = null
 
   /**
    *
@@ -2647,7 +2633,7 @@ class HttpAdapter {
       code === 204 ||
       // Not Modified
       code === 304
-    );
+    )
   }
 
   /**
@@ -2655,7 +2641,10 @@ class HttpAdapter {
    * @param {*} reason
    */
   abort(reason) {
-    this.emitter.emit('abort', !reason || reason.type ? new CanceledError(null, this.config, this.req) : reason);
+    this.emitter.emit(
+      'abort',
+      !reason || reason.type ? new CanceledError(null, this.config, this.req) : reason
+    );
   }
 
   onFinished() {
@@ -2687,7 +2676,7 @@ class HttpAdapter {
    * @returns
    */
   done(value, isRejected) {
-    if (this.isDone) return;
+    if (this.isDone) return
     this.isDone = true;
     this?.onDone(value, isRejected);
   }
@@ -2706,7 +2695,10 @@ class HttpAdapter {
     _.method = method;
 
     if (lookup) {
-      const _lookup = callbackify$1(lookup, /** @param {*} value */ value => (utils$1.isArray(value) ? value : [value]));
+      const _lookup = callbackify(
+        lookup,
+        /** @param {*} value */ value => (utils$1.isArray(value) ? value : [value])
+      );
       // hotfix to support opt.all option which is required for node 20.x
       /**
        * @param {string} hostname
@@ -2715,7 +2707,7 @@ class HttpAdapter {
        */
       lookup = (hostname, opt, cb) => {
         _lookup(hostname, opt, (err, arg0, arg1) => {
-          if (err) return cb(err);
+          if (err) return cb(err)
 
           const addresses = utils$1.isArray(arg0)
             ? arg0.map(addr => buildAddressEntry(addr))
@@ -2753,18 +2745,20 @@ class HttpAdapter {
 
       throw new AxiosError(
         `Request failed with status code ${response.status}`,
-        [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4],
+        [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][
+          Math.floor(response.status / 100) - 4
+        ],
         response.config,
         response.request,
         response
-      );
+      )
     }
 
     if (supportedProtocols.indexOf(protocol) === -1) {
-      throw new AxiosError(`Unsupported protocol ${protocol}`, AxiosError.ERR_BAD_REQUEST, config);
+      throw new AxiosError(`Unsupported protocol ${protocol}`, AxiosError.ERR_BAD_REQUEST, config)
     }
 
-    const headers = AxiosHeaders$1.from(config.headers).normalize();
+    const headers = AxiosHeaders.from(config.headers).normalize();
 
     // Set User-Agent (required by some servers)
     // See https://github.com/axios/axios/issues/69
@@ -2783,10 +2777,14 @@ class HttpAdapter {
     if (utils$1.isSpecCompliantForm(data)) {
       const userBoundary = headers.getContentType(/boundary=([-_\w\d]{10,70})/i);
 
-      data = formDataToStream$1(data, /** @param {*} formHeaders */ formHeaders => headers.set(formHeaders), {
-        tag: `axios-${VERSION}-boundary`,
-        boundary: userBoundary?.[1] || undefined,
-      });
+      data = formDataToStream(
+        data,
+        /** @param {*} formHeaders */ formHeaders => headers.set(formHeaders),
+        {
+          tag: `axios-${VERSION}-boundary`,
+          boundary: userBoundary?.[1] || undefined,
+        }
+      );
       // support for https://www.npmjs.com/package/form-data api
     } else if (utils$1.isFormData(data) && utils$1.isFunction(data.getHeaders)) {
       headers.set(data.getHeaders());
@@ -2800,7 +2798,7 @@ class HttpAdapter {
     } else if (utils$1.isBlob(data)) {
       data.size && headers.setContentType(data.type || 'application/octet-stream');
       headers.setContentLength(data.size || 0);
-      data = stream$1.Readable.from(readBlob$1(data));
+      data = stream$1.Readable.from(readBlob(data));
     } else if (data && !utils$1.isStream(data)) {
       if (Buffer.isBuffer(data)) ; else if (utils$1.isArrayBuffer(data)) {
         data = Buffer.from(new Uint8Array(data));
@@ -2811,14 +2809,18 @@ class HttpAdapter {
           'Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream',
           AxiosError.ERR_BAD_REQUEST,
           config
-        );
+        )
       }
 
       // Add Content-Length header if data exists
       headers.setContentLength(data.length, false);
 
       if (config.maxBodyLength > -1 && data.length > config.maxBodyLength) {
-        throw new AxiosError('Request body larger than maxBodyLength limit', AxiosError.ERR_BAD_REQUEST, config);
+        throw new AxiosError(
+          'Request body larger than maxBodyLength limit',
+          AxiosError.ERR_BAD_REQUEST,
+          config
+        )
       }
     }
 
@@ -2842,7 +2844,7 @@ class HttpAdapter {
       data = stream$1.pipeline(
         [
           data,
-          new AxiosTransformStream$1({
+          new AxiosTransformStream({
             maxRate: utils$1.toFiniteNumber(maxUploadRate),
           }),
         ],
@@ -2854,7 +2856,10 @@ class HttpAdapter {
           'progress',
           flushOnFinish(
             data,
-            progressEventDecorator(contentLength, progressEventReducer(asyncDecorator(onUploadProgress), false, 3))
+            progressEventDecorator(
+              contentLength,
+              progressEventReducer(asyncDecorator(onUploadProgress), false, 3)
+            )
           )
         );
     }
@@ -2878,24 +2883,31 @@ class HttpAdapter {
     let path;
 
     try {
-      path = buildURL(parsed.pathname + parsed.search, config.params, config.paramsSerializer).replace(/^\?/, '');
+      path = buildURL(
+        parsed.pathname + parsed.search,
+        config.params,
+        config.paramsSerializer
+      ).replace(/^\?/, '');
     } catch (err) {
       /** @type {*} */
       const customErr = new Error(err.message);
       customErr.config = config;
       customErr.url = config.url;
       customErr.exists = true;
-      throw customErr;
+      throw customErr
     }
 
-    headers.set('Accept-Encoding', `gzip, compress, deflate${isBrotliSupported ? ', br' : ''}`, false);
+    headers.set(
+      'Accept-Encoding',
+      `gzip, compress, deflate${isBrotliSupported ? ', br' : ''}`,
+      false
+    );
 
     /** @type {*} */
     const options = {
       path,
       method,
       headers: headers.toJSON(),
-      agents: {http: config.httpAgent, https: config.httpsAgent},
       auth,
       protocol,
       family,
@@ -2903,23 +2915,30 @@ class HttpAdapter {
       beforeRedirects: {},
     };
 
+    if (config.httpAgent) options.agents = {http: config.httpAgent};
+    if (config.httpsAgent) options.agents.https = config.httpAgent;
+
+    // ! 配置了 agent,使用Agent，否则使用缺省 agent，agents 优于agent
+    if (config.agents) options.agents = config.agents;
+    else if (config.agent) options.agents = new agent.Agent(config.agent);
+
+    const isHttpsRequest = isHttps.test(options.protocol);
+    // agents 优先于 agent，在 request中根据协议从 agents 中获取
+    options.agent = isHttpsRequest ? config.httpsAgent : config.httpAgent;
+
     // cacheable-lookup integration hotfix
     if (!utils$1.isUndefined(lookup)) options.lookup = lookup;
 
     if (config.socketPath) options.socketPath = config.socketPath;
     else {
-      options.hostname = parsed.hostname.startsWith('[') ? parsed.hostname.slice(1, -1) : parsed.hostname;
+      options.hostname = parsed.hostname.startsWith('[')
+        ? parsed.hostname.slice(1, -1)
+        : parsed.hostname;
       options.port = parsed.port;
-      // ! proxy 配置了 agent，否则使用缺省 agent
-      if (config.agent) options.agents = new Agent(config.agent);
     }
 
     // 执行请求的具体对象
     _.transport = config.transport;
-
-    const isHttpsRequest = isHttps.test(options.protocol);
-    options.agent = isHttpsRequest ? config.httpsAgent : config.httpAgent;
-
     if (config.maxBodyLength > -1) options.maxBodyLength = config.maxBodyLength;
     // follow-redirects does not skip comparison, so it should always succeed for axios -1 unlimited
     else options.maxBodyLength = Number.POSITIVE_INFINITY;
@@ -2929,16 +2948,20 @@ class HttpAdapter {
     // 自动跳转
     // else {
     // 支持跳转或stream，需使用 http、https 封装类
-    if (config.maxRedirects) options.maxRedirects = config.maxRedirects;
+
+    options.maxRedirects = config.maxRedirects ?? 21;
+    options.followRedirects = config.followRedirects ?? true; // 默认自动跳转
+    if (config.maxRedirects === 0) options.followRedirects = false;
     if (config.beforeRedirect) options.beforeRedirects.config = config.beforeRedirect;
 
     if (config.insecureHTTPParser) options.insecureHTTPParser = config.insecureHTTPParser;
 
+    // _.data = data
+    options.data = data; // 传给 request 处理
     _.options = options;
-    _.data = data;
 
-    log({config}, 'init');
-    return options;
+    // log({config}, 'init')
+    return options
   }
 
   /**
@@ -2957,7 +2980,7 @@ class HttpAdapter {
     try {
       await _.init();
 
-      const {transport, protocol, config, options, data, abort, emitter, maxDownloadRate} = _;
+      const {transport, protocol, config, options, abort, emitter, maxDownloadRate} = _;
       const {responseType, responseEncoding, onDownloadProgress} = config;
 
       if (protocol === 'data:') {
@@ -2968,7 +2991,7 @@ class HttpAdapter {
             Blob: config.env?.Blob,
           });
         } catch (err) {
-          throw AxiosError.from(err, AxiosError.ERR_BAD_REQUEST, config);
+          throw AxiosError.from(err, AxiosError.ERR_BAD_REQUEST, config)
         }
 
         if (responseType === 'text') {
@@ -2986,13 +3009,13 @@ class HttpAdapter {
           data: convertedData,
           status: 200,
           statusText: 'OK',
-          headers: new AxiosHeaders$1(),
+          headers: new AxiosHeaders(),
           config,
         };
       } else {
         let transformStream;
         if (onDownloadProgress || maxDownloadRate) {
-          transformStream = new AxiosTransformStream$1({
+          transformStream = new AxiosTransformStream({
             maxRate: utils$1.toFiniteNumber(maxDownloadRate),
           });
 
@@ -3014,18 +3037,19 @@ class HttpAdapter {
         R = await new Promise((resolve, reject) => {
           _.emitter.once('abort', reject);
 
-          options.stream = config.stream;
-          options.decompress = config.decompress;
+          options.stream = config.stream ?? false;
+          options.decompress = config.decompress ?? true;
           // Create the request，promise false: return stream
           // log.debug('request', {options});
           const req = transport ? transport.request(options) : request(options);
 
-          if (!req) return reject(new AxiosError('Request failed.', AxiosError.ERR_BAD_REQUEST, config));
+          if (!req)
+            return reject(new AxiosError('Request failed.', AxiosError.ERR_BAD_REQUEST, config))
 
           _.req = req;
 
           emitter.once('abort', err => {
-            log('onabort');
+            // log('onabort')
             reject(err);
             req.destroy(err);
           });
@@ -3034,22 +3058,22 @@ class HttpAdapter {
           req.on(
             'error',
             /** @param {*} err */ err => {
-              log('onerror');
+              // log('onerror')
               // @todo remove
               // if (req.aborted && err.code !== AxiosError.ERR_FR_TOO_MANY_REDIRECTS) return;
               reject(AxiosError.from(err, null, config, req));
             }
           );
 
+          // socket 连接成功事件，移到 request
           // set tcp keep alive to prevent drop connection by peer
-          req.on(
-            'socket',
-            /** @param {*} socket */ socket => {
-              log('onsocket');
-              // default interval of sending ack packet is 1 minute
-              socket.setKeepAlive(true, 1000 * 60);
-            }
-          );
+          // req.on(
+          //   'socket',
+          //   /** @param {*} socket */ socket => {
+          //     // default interval of sending ack packet is 1 minute
+          //     socket.setKeepAlive(true, 1000 * 60)
+          //   }
+          // )
 
           // Handle request timeout
           if (config.timeout) {
@@ -3072,7 +3096,7 @@ class HttpAdapter {
               // And then these socket which be hang up will devouring CPU little by little.
               // ClientRequest.setTimeout will be fired on the specify milliseconds, and can make sure that abort() will be fired after connect.
               req.setTimeout(timeout, () => {
-                if (_.isDone) return;
+                if (_.isDone) return
 
                 let timeoutErrorMessage = config.timeout
                   ? `timeout of ${config.timeout}ms exceeded`
@@ -3084,7 +3108,9 @@ class HttpAdapter {
                 reject(
                   new AxiosError(
                     timeoutErrorMessage,
-                    transitional.clarifyTimeoutError ? AxiosError.ETIMEDOUT : AxiosError.ECONNABORTED,
+                    transitional.clarifyTimeoutError
+                      ? AxiosError.ETIMEDOUT
+                      : AxiosError.ECONNABORTED,
                     config,
                     req
                   )
@@ -3104,20 +3130,20 @@ class HttpAdapter {
             req.on(
               'response',
               /**
-               * @param {*} res
-               * @param {*} stream
+               * @param {*} res 原数据流
+               * @param {*} stream 解压等处理后的数据流
                */
               (res, stream) => {
-                if (req.destroyed) return;
+                if (req.destroyed) return
 
                 // 'transfer-encoding': 'chunked'时，无content-length，axios v1.2 不能自动解压
                 const responseLength = +res.headers['content-length'];
 
-                log('onresponse', {
-                  statusCode: res.statusCode,
-                  responseLength,
-                  headers: res.headers,
-                });
+                // log('onresponse', {
+                //   statusCode: res.statusCode,
+                //   responseLength,
+                //   headers: res.headers,
+                // })
 
                 // return the last request(ClientRequest) in case of redirects
                 const lastRequest = res.req || req;
@@ -3126,7 +3152,7 @@ class HttpAdapter {
                 const response = {
                   status: res.statusCode,
                   statusText: res.statusMessage,
-                  headers: new AxiosHeaders$1(res.headers),
+                  headers: new AxiosHeaders(res.headers),
                   config,
                   request: lastRequest,
                 };
@@ -3149,7 +3175,10 @@ class HttpAdapter {
                       totalResponseBytes += chunk.length;
 
                       // make sure the content length is not over the maxContentLength if specified
-                      if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
+                      if (
+                        config.maxContentLength > -1 &&
+                        totalResponseBytes > config.maxContentLength
+                      ) {
                         // stream.destroy() emit aborted event before calling reject() on Node.js v16
                         _.rejected = true;
                         stream.destroy();
@@ -3166,7 +3195,7 @@ class HttpAdapter {
                   );
 
                   stream.on('aborted', function handlerStreamAborted() {
-                    if (_.rejected) return;
+                    if (_.rejected) return
 
                     const err = new AxiosError(
                       `maxContentLength size of ${config.maxContentLength} exceeded`,
@@ -3179,7 +3208,7 @@ class HttpAdapter {
                   });
 
                   stream.on('error', function handleStreamError(err) {
-                    if (req.destroyed) return;
+                    if (req.destroyed) return
                     reject(AxiosError.from(err, null, config, lastRequest));
                   });
 
@@ -3187,7 +3216,9 @@ class HttpAdapter {
                   stream.on('end', function handleStreamEnd() {
                     try {
                       let responseData =
-                        responseBuffer.length === 1 ? responseBuffer[0] : Buffer.concat(responseBuffer);
+                        responseBuffer.length === 1
+                          ? responseBuffer[0]
+                          : Buffer.concat(responseBuffer);
                       if (responseType !== 'arraybuffer') {
                         responseData = responseData.toString(responseEncoding);
                         if (!responseEncoding || responseEncoding === 'utf8') {
@@ -3211,32 +3242,32 @@ class HttpAdapter {
               }
             );
 
-            // 发送数据
-            if (utils$1.isStream(data)) {
-              // Send the request
-              let ended = false;
-              let errored = false;
+            // 非stream模式需发送数据，改由request处理
+            // if (utils.isStream(data)) {
+            //   // Send the request
+            //   let ended = false
+            //   let errored = false
 
-              data.on('end', () => {
-                ended = true;
-              });
+            //   data.on('end', () => {
+            //     ended = true
+            //   })
 
-              data.once(
-                'error',
-                /** @param {*} err */ err => {
-                  errored = true;
-                  req.destroy(err);
-                }
-              );
+            //   data.once(
+            //     'error',
+            //     /** @param {*} err */ err => {
+            //       errored = true
+            //       req.destroy(err)
+            //     }
+            //   )
 
-              data.on('close', () => {
-                if (!ended && !errored) {
-                  abort(new CanceledError('Request stream has been aborted', config, req));
-                }
-              });
+            //   data.on('close', () => {
+            //     if (!ended && !errored) {
+            //       abort(new CanceledError('Request stream has been aborted', config, req))
+            //     }
+            //   })
 
-              data.pipe(req); // stream 写入数据
-            } else req.end(data);
+            //   data.pipe(req) // stream 写入数据
+            // } else req.end(data)
           }
         });
       }
@@ -3245,12 +3276,11 @@ class HttpAdapter {
     } catch (e) {
       log.error(e, 'request');
       _.done(e, true);
-      throw e;
+      throw e
     }
-    return R;
+    return R
   }
 }
-
 
 /**
  *
@@ -3261,7 +3291,7 @@ class HttpAdapter {
 const flushOnFinish = (stream, [throttled, flush]) => {
   stream.on('end', flush).on('error', flush);
 
-  return throttled;
+  return throttled
 };
 
 /** @typedef {import('../core/Axios').default} Axios */
@@ -3275,7 +3305,7 @@ const flushOnFinish = (stream, [throttled, flush]) => {
  *
  */
 function dispatchBeforeRedirect(options, responseDetails) {
-  log.debug('dispatchBeforeRedirect', {opts: options.beforeRedirects});
+  // log.debug('dispatchBeforeRedirect', {opts: options.beforeRedirects})
 
   if (options.beforeRedirects.proxy) options.beforeRedirects.proxy(options);
   if (options.beforeRedirects.config) options.beforeRedirects.config(options, responseDetails);
@@ -3288,13 +3318,13 @@ function dispatchBeforeRedirect(options, responseDetails) {
  */
 function resolveFamily({address, family}) {
   if (!utils$1.isString(address)) {
-    throw TypeError('address must be a string');
+    throw TypeError('address must be a string')
   }
 
   return {
     address,
     family: family || (address.indexOf('.') < 0 ? 6 : 4),
-  };
+  }
 }
 
 /**
@@ -3310,6 +3340,69 @@ function buildAddressEntry(address, family) {
  * null or funciton
  */
 const HttpAdapter$1 = isHttpAdapterSupported && HttpAdapter;
+
+platform.hasStandardBrowserEnv ?
+
+// Standard browser envs have full support of the APIs needed to test
+// whether the request URL is of the same origin as current location.
+  (function standardBrowserEnv() {
+    const msie = platform.navigator && /(msie|trident)/i.test(platform.navigator.userAgent);
+    const urlParsingNode = document.createElement('a');
+    let originURL;
+
+    /**
+    * Parse a URL to discover its components
+    *
+    * @param {String} url The URL to be parsed
+    * @returns {Object}
+    */
+    function resolveURL(url) {
+      let href = url;
+
+      if (msie) {
+        // IE needs attribute set twice to normalize properties
+        urlParsingNode.setAttribute('href', href);
+        href = urlParsingNode.href;
+      }
+
+      urlParsingNode.setAttribute('href', href);
+
+      // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
+      return {
+        href: urlParsingNode.href,
+        protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, '') : '',
+        host: urlParsingNode.host,
+        search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, '') : '',
+        hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, '') : '',
+        hostname: urlParsingNode.hostname,
+        port: urlParsingNode.port,
+        pathname: (urlParsingNode.pathname.charAt(0) === '/') ?
+          urlParsingNode.pathname :
+          '/' + urlParsingNode.pathname
+      };
+    }
+
+    originURL = resolveURL(window.location.href);
+
+    /**
+    * Determine if a URL shares the same origin as the current location
+    *
+    * @param {String} requestURL The URL to test
+    * @returns {boolean} True if URL shares the same origin, otherwise false
+    */
+    return function isURLSameOrigin(requestURL) {
+      const parsed = (utils$1.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
+      return (parsed.protocol === originURL.protocol &&
+          parsed.host === originURL.host);
+    };
+  })() :
+
+  // Non standard browser envs (web workers, react-native) lack needed support.
+  (function nonStandardBrowserEnv() {
+    return function isURLSameOrigin() {
+      return true;
+    };
+  })();
 
 const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
 class XhrAdapter {
@@ -3423,7 +3516,7 @@ function dispatchRequest(config) {
   let R;
   throwIfCancellationRequested(config);
 
-  config.headers = AxiosHeaders$1.from(config.headers);
+  config.headers = AxiosHeaders.from(config.headers);
 
   // Transform request data
   config.data = transformData.call(config, config.transformRequest);
@@ -3432,7 +3525,7 @@ function dispatchRequest(config) {
     config.headers.setContentType('application/x-www-form-urlencoded', false);
   }
 
-  const Adapter = adapters.getAdapter(config.adapter || defaults$1.adapter);
+  const Adapter = adapters.getAdapter(config.adapter || defaults.adapter);
   const adapter = new Adapter(config);
 
   if (config.stream) R = adapter.request(this);
@@ -3451,7 +3544,7 @@ function dispatchRequest(config) {
         });
         // if (response.data && !response.body) response.body = response.data
 
-        response.headers = AxiosHeaders$1.from(response.headers);
+        response.headers = AxiosHeaders.from(response.headers);
 
         return response
       },
@@ -3464,7 +3557,7 @@ function dispatchRequest(config) {
             reason.response.data = transformData.call(config, config.transformResponse, reason.response);
             // body === data
             if (reason.response.data && !reason.response.body) reason.response.body = reason.response.data;
-            reason.response.headers = AxiosHeaders$1.from(reason.response.headers);
+            reason.response.headers = AxiosHeaders.from(reason.response.headers);
           }
         }
 
@@ -3475,7 +3568,7 @@ function dispatchRequest(config) {
   return R
 }
 
-const headersToObject = (thing) => thing instanceof AxiosHeaders$1 ? { ...thing } : thing;
+const headersToObject = (thing) => thing instanceof AxiosHeaders ? { ...thing } : thing;
 
 /**
  * Config-specific merge-function which creates a new config-object
@@ -3686,8 +3779,8 @@ class Axios {
     this.defaults = instanceConfig;
     this.config = this.defaults; // !+++
     this.interceptors = {
-      request: new InterceptorManager$1(),
-      response: new InterceptorManager$1(),
+      request: new InterceptorManager(),
+      response: new InterceptorManager(),
     };
 
     this.init(); // !+++
@@ -3874,7 +3967,7 @@ class Axios {
       });
 
     // 源值存在，则不覆盖，contextHeaders 优先于 headers
-    config.headers = AxiosHeaders$1.concat(contextHeaders, headers);
+    config.headers = AxiosHeaders.concat(contextHeaders, headers);
 
     // filter out skipped interceptors
     const requestInterceptorChain = []; // 请求拦截器，hook
@@ -4065,8 +4158,6 @@ utils$1.forEach(['posts', 'puts', 'patchs'], function forEachMethodWithData(meth
   Axios.prototype[`${method}Forms`] = generateStreamMethod(true);
 });
 
-const Axios$1 = Axios;
-
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
  *
@@ -4197,8 +4288,6 @@ class CancelToken {
   }
 }
 
-const CancelToken$1 = CancelToken;
-
 /**
  * Syntactic sugar for invoking a function and expanding an array for arguments.
  *
@@ -4237,6 +4326,76 @@ function isAxiosError(payload) {
   return utils$1.isObject(payload) && (payload.isAxiosError === true);
 }
 
+const HttpStatusCode = {
+  Continue: 100,
+  SwitchingProtocols: 101,
+  Processing: 102,
+  EarlyHints: 103,
+  Ok: 200,
+  Created: 201,
+  Accepted: 202,
+  NonAuthoritativeInformation: 203,
+  NoContent: 204,
+  ResetContent: 205,
+  PartialContent: 206,
+  MultiStatus: 207,
+  AlreadyReported: 208,
+  ImUsed: 226,
+  MultipleChoices: 300,
+  MovedPermanently: 301,
+  Found: 302,
+  SeeOther: 303,
+  NotModified: 304,
+  UseProxy: 305,
+  Unused: 306,
+  TemporaryRedirect: 307,
+  PermanentRedirect: 308,
+  BadRequest: 400,
+  Unauthorized: 401,
+  PaymentRequired: 402,
+  Forbidden: 403,
+  NotFound: 404,
+  MethodNotAllowed: 405,
+  NotAcceptable: 406,
+  ProxyAuthenticationRequired: 407,
+  RequestTimeout: 408,
+  Conflict: 409,
+  Gone: 410,
+  LengthRequired: 411,
+  PreconditionFailed: 412,
+  PayloadTooLarge: 413,
+  UriTooLong: 414,
+  UnsupportedMediaType: 415,
+  RangeNotSatisfiable: 416,
+  ExpectationFailed: 417,
+  ImATeapot: 418,
+  MisdirectedRequest: 421,
+  UnprocessableEntity: 422,
+  Locked: 423,
+  FailedDependency: 424,
+  TooEarly: 425,
+  UpgradeRequired: 426,
+  PreconditionRequired: 428,
+  TooManyRequests: 429,
+  RequestHeaderFieldsTooLarge: 431,
+  UnavailableForLegalReasons: 451,
+  InternalServerError: 500,
+  NotImplemented: 501,
+  BadGateway: 502,
+  ServiceUnavailable: 503,
+  GatewayTimeout: 504,
+  HttpVersionNotSupported: 505,
+  VariantAlsoNegotiates: 506,
+  InsufficientStorage: 507,
+  LoopDetected: 508,
+  NotExtended: 510,
+  NetworkAuthenticationRequired: 511,
+};
+
+Object.entries(HttpStatusCode).forEach(([key, value]) => {
+  HttpStatusCode[value] = key;
+});
+
 /**
  * Create an instance of Axios
  *
@@ -4245,11 +4404,11 @@ function isAxiosError(payload) {
  * @returns {Axios} A new instance of Axios
  */
 function createInstance(defaultConfig) {
-  const context = new Axios$1(defaultConfig);
-  const instance = bind(Axios$1.prototype.request, context);
+  const context = new Axios(defaultConfig);
+  const instance = bind(Axios.prototype.request, context);
 
   // Copy axios.prototype to instance
-  utils$1.extend(instance, Axios$1.prototype, context, {allOwnKeys: true});
+  utils$1.extend(instance, Axios.prototype, context, {allOwnKeys: true});
 
   // Copy context to instance
   utils$1.extend(instance, context, null, {allOwnKeys: true});
@@ -4263,14 +4422,14 @@ function createInstance(defaultConfig) {
 }
 
 // Create the default instance to be exported
-const req = createInstance(defaults$1);
+const req = createInstance(defaults);
 
 // Expose Axios class to allow class inheritance
-req.Axios = Axios$1;
+req.Axios = Axios;
 
 // Expose Cancel & CancelToken
 req.CanceledError = CanceledError;
-req.CancelToken = CancelToken$1;
+req.CancelToken = CancelToken;
 req.isCancel = isCancel;
 req.VERSION = VERSION;
 req.toFormData = toFormData;
@@ -4292,7 +4451,7 @@ req.isAxiosError = isAxiosError;
 // Expose mergeConfig
 req.mergeConfig = mergeConfig;
 
-req.AxiosHeaders = AxiosHeaders$1;
+req.AxiosHeaders = AxiosHeaders;
 
 req.formToJSON = thing => formDataToJSON(utils$1.isHTMLForm(thing) ? new FormData(thing) : thing);
 
