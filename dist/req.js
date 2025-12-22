@@ -1,6 +1,6 @@
 /*!
-  * @wia/req v1.7.28
-  * (c) 2024 Sibyl Yu, Matt Zabriskie and contributors
+  * @wia/req v1.7.33
+  * (c) 2024-2025 Sibyl Yu, Matt Zabriskie and contributors
   * Released under the MIT License.
   */
 (function (global, factory) {
@@ -998,9 +998,6 @@
   }
 
   let InterceptorManager = class InterceptorManager {
-      constructor(){
-          this.handlers = [];
-      }
       /**
      * Add a new interceptor to the stack
      *
@@ -1052,6 +1049,9 @@
                   fn(h);
               }
           });
+      }
+      constructor(){
+          this.handlers = [];
       }
   };
   var InterceptorManager$1 = InterceptorManager;
@@ -1793,8 +1793,11 @@
   	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
   }
 
+  /* eslint-env browser */
+
   var browser = typeof self == 'object' ? self.FormData : window.FormData;
-  var FormData$2 = /*@__PURE__*/ getDefaultExportFromCjs(browser);
+
+  var FormData$2 = /*@__PURE__*/getDefaultExportFromCjs(browser);
 
   /**
    * Determines if the given thing is a array or js object.
@@ -2421,9 +2424,6 @@
       });
   }
   let AxiosHeaders = class AxiosHeaders {
-      constructor(headers){
-          headers && this.set(headers);
-      }
       /**
      *
      * @param {*} header
@@ -2582,6 +2582,9 @@
           utils$2.isArray(header) ? header.forEach(defineAccessor) : defineAccessor(header);
           return this;
       }
+      constructor(headers){
+          headers && this.set(headers);
+      }
   };
   AxiosHeaders.accessor([
       'Content-Type',
@@ -2686,12 +2689,12 @@
 
   const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
   let XhrAdapter = class XhrAdapter {
-      constructor(config){
-          this.init(config);
-      }
       init(config) {}
       request() {}
       stream() {}
+      constructor(config){
+          this.init(config);
+      }
   };
   var XhrAdapter$1 = isXHRAdapterSupported && XhrAdapter;
 
@@ -3004,17 +3007,6 @@
    *
    * @return {Axios} A new instance of Axios
    */ let Axios = class Axios {
-      constructor(instanceConfig){
-          this.defaults = instanceConfig;
-          this.config = this.defaults // !+++
-          ;
-          this.interceptors = {
-              request: new InterceptorManager$1(),
-              response: new InterceptorManager$1()
-          };
-          this.init() // !+++
-          ;
-      }
       /**
      * !+++
      * config 属性直接挂在到实例上，方便读取、设置、修改
@@ -3264,6 +3256,17 @@
           const fullPath = buildFullPath(config.baseURL, config.url);
           return buildURL(fullPath, config.params, config.paramsSerializer);
       }
+      constructor(instanceConfig){
+          this.defaults = instanceConfig;
+          this.config = this.defaults // !+++
+          ;
+          this.interceptors = {
+              request: new InterceptorManager$1(),
+              response: new InterceptorManager$1()
+          };
+          this.init() // !+++
+          ;
+      }
   };
   // Provide aliases for supported request methods
   utils$2.forEach([
@@ -3354,46 +3357,6 @@
    *
    * @returns {CancelToken}
    */ let CancelToken = class CancelToken {
-      constructor(executor){
-          if (typeof executor !== 'function') {
-              throw new TypeError('executor must be a function.');
-          }
-          let resolvePromise;
-          this.promise = new Promise(function promiseExecutor(resolve) {
-              resolvePromise = resolve;
-          });
-          const token = this;
-          // eslint-disable-next-line func-names
-          this.promise.then((cancel)=>{
-              if (!token._listeners) return;
-              let i = token._listeners.length;
-              while(i-- > 0){
-                  token._listeners[i](cancel);
-              }
-              token._listeners = null;
-          });
-          // eslint-disable-next-line func-names
-          this.promise.then = (onfulfilled)=>{
-              let _resolve;
-              // eslint-disable-next-line func-names
-              const promise = new Promise((resolve)=>{
-                  token.subscribe(resolve);
-                  _resolve = resolve;
-              }).then(onfulfilled);
-              promise.cancel = function reject() {
-                  token.unsubscribe(_resolve);
-              };
-              return promise;
-          };
-          executor(function cancel(message, config, request) {
-              if (token.reason) {
-                  // Cancellation has already been requested
-                  return;
-              }
-              token.reason = new CanceledError(message, config, request);
-              resolvePromise(token.reason);
-          });
-      }
       /**
      * Throws a `CanceledError` if cancellation has been requested.
      */ throwIfRequested() {
@@ -3448,6 +3411,46 @@
               token,
               cancel
           };
+      }
+      constructor(executor){
+          if (typeof executor !== 'function') {
+              throw new TypeError('executor must be a function.');
+          }
+          let resolvePromise;
+          this.promise = new Promise(function promiseExecutor(resolve) {
+              resolvePromise = resolve;
+          });
+          const token = this;
+          // eslint-disable-next-line func-names
+          this.promise.then((cancel)=>{
+              if (!token._listeners) return;
+              let i = token._listeners.length;
+              while(i-- > 0){
+                  token._listeners[i](cancel);
+              }
+              token._listeners = null;
+          });
+          // eslint-disable-next-line func-names
+          this.promise.then = (onfulfilled)=>{
+              let _resolve;
+              // eslint-disable-next-line func-names
+              const promise = new Promise((resolve)=>{
+                  token.subscribe(resolve);
+                  _resolve = resolve;
+              }).then(onfulfilled);
+              promise.cancel = function reject() {
+                  token.unsubscribe(_resolve);
+              };
+              return promise;
+          };
+          executor(function cancel(message, config, request) {
+              if (token.reason) {
+                  // Cancellation has already been requested
+                  return;
+              }
+              token.reason = new CanceledError(message, config, request);
+              resolvePromise(token.reason);
+          });
       }
   };
   var CancelToken$1 = CancelToken;

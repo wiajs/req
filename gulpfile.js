@@ -1,9 +1,8 @@
-import gulp from 'gulp'
+import exec from 'exec-sh'
 import fs from 'fs-extra'
+import gulp from 'gulp'
 import {build} from './script/build.js'
 import configs from './script/config.js'
-import axios from "./bin/githubAxios.js";
-import minimist from "minimist";
 
 const nodeEnv = process.env.NODE_ENV || 'development'
 const src = './src'
@@ -27,9 +26,19 @@ async function clean(cb) {
 }
 
 /**
+ * swc 编译 js 代码
+ * @param {*} cb
+ */
+async function swcjs(cb) {
+  exec('swc --config-file ./.swcrc ./src -d lib --strip-leading-paths')
+
+  if (cb) cb()
+}
+
+/**
  * 同时生成umd、cjs、esm 三种格式输出文件
  */
-const buildAll = gulp.series(clean, cb => {
+const buildAll = gulp.series(clean, swcjs, cb => {
   console.log('start build ...')
   build(configs, cb)
 })
@@ -70,4 +79,3 @@ gulp.task('watch', () => {
 
 export default buildAll
 export {buildAll as build}
-

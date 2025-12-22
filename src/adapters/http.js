@@ -1,33 +1,29 @@
-import request from '@wiajs/request'
 import {Agent} from '@wiajs/agent'
 import {log as Log, name} from '@wiajs/log'
-import utils from '../utils.js'
-import settle from '../core/settle.js'
-import buildFullPath from '../core/buildFullPath.js'
-import buildURL from '../helpers/buildURL.js'
-// import {getProxyForUrl} from 'proxy-from-env';
-import util from 'node:util'
+import request from '@wiajs/request'
 // import followRedirects from 'follow-redirects';
 // import Redirect from '../request/index.js'
-import zlib from 'node:zlib'
-import {VERSION} from '../env/data.js'
-import transitionalDefaults from '../defaults/transitional.js'
-import AxiosError from '../core/AxiosError.js'
+import {EventEmitter} from 'events'
+import stream from 'stream'
+// import {getProxyForUrl} from 'proxy-from-env';
+import util from 'util'
+import zlib from 'zlib'
 import CanceledError from '../cancel/CanceledError.js'
-import platform from '../platform/index.js'
-import fromDataURI from '../helpers/fromDataURI.js'
-import stream from 'node:stream'
+import AxiosError from '../core/AxiosError.js'
 import AxiosHeaders from '../core/AxiosHeaders.js'
+import buildFullPath from '../core/buildFullPath.js'
+import settle from '../core/settle.js'
+import transitionalDefaults from '../defaults/transitional.js'
+import {VERSION} from '../env/data.js'
 import AxiosTransformStream from '../helpers/AxiosTransformStream.js'
-import {EventEmitter} from 'node:events'
-import formDataToStream from '../helpers/formDataToStream.js'
-import readBlob from '../helpers/readBlob.js'
+import buildURL from '../helpers/buildURL.js'
 import callbackify from '../helpers/callbackify.js'
-import {
-  progressEventReducer,
-  progressEventDecorator,
-  asyncDecorator,
-} from '../helpers/progressEventReducer.js'
+import formDataToStream from '../helpers/formDataToStream.js'
+import fromDataURI from '../helpers/fromDataURI.js'
+import {asyncDecorator, progressEventDecorator, progressEventReducer} from '../helpers/progressEventReducer.js'
+import readBlob from '../helpers/readBlob.js'
+import platform from '../platform/index.js'
+import utils from '../utils.js'
 
 const px = {host: '114.98.163.61:17813'}
 const agent = {
@@ -53,7 +49,7 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils.kindOf(pr
 
 /**
  * !+++
- * 将request 函数改为类，请求拆分为 init 初始化和 请求执行，
+ * 将request 函数改为类，request 拆分为 init 初始化和 请求执行，
  * 如需重新发起请求时，无需重新初始化
  */
 class HttpAdapter {
@@ -104,10 +100,7 @@ class HttpAdapter {
    * @param {*} reason
    */
   abort(reason) {
-    this.emitter.emit(
-      'abort',
-      !reason || reason.type ? new CanceledError(null, this.config, this.req) : reason
-    )
+    this.emitter.emit('abort', !reason || reason.type ? new CanceledError(null, this.config, this.req) : reason)
   }
 
   onFinished() {
@@ -158,10 +151,7 @@ class HttpAdapter {
     _.method = method
 
     if (lookup) {
-      const _lookup = callbackify(
-        lookup,
-        /** @param {*} value */ value => (utils.isArray(value) ? value : [value])
-      )
+      const _lookup = callbackify(lookup, /** @param {*} value */ value => (utils.isArray(value) ? value : [value]))
       // hotfix to support opt.all option which is required for node 20.x
       /**
        * @param {string} hostname
@@ -208,9 +198,7 @@ class HttpAdapter {
 
       throw new AxiosError(
         `Request failed with status code ${response.status}`,
-        [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][
-          Math.floor(response.status / 100) - 4
-        ],
+        [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4],
         response.config,
         response.request,
         response
@@ -240,14 +228,10 @@ class HttpAdapter {
     if (utils.isSpecCompliantForm(data)) {
       const userBoundary = headers.getContentType(/boundary=([-_\w\d]{10,70})/i)
 
-      data = formDataToStream(
-        data,
-        /** @param {*} formHeaders */ formHeaders => headers.set(formHeaders),
-        {
-          tag: `axios-${VERSION}-boundary`,
-          boundary: userBoundary?.[1] || undefined,
-        }
-      )
+      data = formDataToStream(data, /** @param {*} formHeaders */ formHeaders => headers.set(formHeaders), {
+        tag: `axios-${VERSION}-boundary`,
+        boundary: userBoundary?.[1] || undefined,
+      })
       // support for https://www.npmjs.com/package/form-data api
     } else if (utils.isFormData(data) && utils.isFunction(data.getHeaders)) {
       headers.set(data.getHeaders())
@@ -281,11 +265,7 @@ class HttpAdapter {
       headers.setContentLength(data.length, false)
 
       if (config.maxBodyLength > -1 && data.length > config.maxBodyLength) {
-        throw new AxiosError(
-          'Request body larger than maxBodyLength limit',
-          AxiosError.ERR_BAD_REQUEST,
-          config
-        )
+        throw new AxiosError('Request body larger than maxBodyLength limit', AxiosError.ERR_BAD_REQUEST, config)
       }
     }
 
@@ -321,10 +301,7 @@ class HttpAdapter {
           'progress',
           flushOnFinish(
             data,
-            progressEventDecorator(
-              contentLength,
-              progressEventReducer(asyncDecorator(onUploadProgress), false, 3)
-            )
+            progressEventDecorator(contentLength, progressEventReducer(asyncDecorator(onUploadProgress), false, 3))
           )
         )
     }
@@ -348,11 +325,7 @@ class HttpAdapter {
     let path
 
     try {
-      path = buildURL(
-        parsed.pathname + parsed.search,
-        config.params,
-        config.paramsSerializer
-      ).replace(/^\?/, '')
+      path = buildURL(parsed.pathname + parsed.search, config.params, config.paramsSerializer).replace(/^\?/, '')
     } catch (err) {
       /** @type {*} */
       const customErr = new Error(err.message)
@@ -362,11 +335,7 @@ class HttpAdapter {
       throw customErr
     }
 
-    headers.set(
-      'Accept-Encoding',
-      `gzip, compress, deflate${isBrotliSupported ? ', br' : ''}`,
-      false
-    )
+    headers.set('Accept-Encoding', `gzip, compress, deflate${isBrotliSupported ? ', br' : ''}`, false)
 
     /** @type {*} */
     const options = {
@@ -381,7 +350,7 @@ class HttpAdapter {
     }
 
     if (config.httpAgent) options.agents = {http: config.httpAgent}
-    if (config.httpsAgent) options.agents.https = config.httpAgent
+    if (config.httpsAgent) options.agents.https = config.httpsAgent
 
     // ! 配置了 agent,使用Agent，否则使用缺省 agent，agents 优于agent
     if (config.agents) options.agents = config.agents
@@ -396,9 +365,7 @@ class HttpAdapter {
 
     if (config.socketPath) options.socketPath = config.socketPath
     else {
-      options.hostname = parsed.hostname.startsWith('[')
-        ? parsed.hostname.slice(1, -1)
-        : parsed.hostname
+      options.hostname = parsed.hostname.startsWith('[') ? parsed.hostname.slice(1, -1) : parsed.hostname
       options.port = parsed.port
     }
 
@@ -505,11 +472,10 @@ class HttpAdapter {
           options.stream = config.stream ?? false
           options.decompress = config.decompress ?? true
           // Create the request，promise false: return stream
-          // log.debug('request', {options});
+          // log({transport, options}, 'request')
           const req = transport ? transport.request(options) : request(options)
 
-          if (!req)
-            return reject(new AxiosError('Request failed.', AxiosError.ERR_BAD_REQUEST, config))
+          if (!req) return reject(new AxiosError('Request failed.', AxiosError.ERR_BAD_REQUEST, config))
 
           _.req = req
 
@@ -573,9 +539,7 @@ class HttpAdapter {
                 reject(
                   new AxiosError(
                     timeoutErrorMessage,
-                    transitional.clarifyTimeoutError
-                      ? AxiosError.ETIMEDOUT
-                      : AxiosError.ECONNABORTED,
+                    transitional.clarifyTimeoutError ? AxiosError.ETIMEDOUT : AxiosError.ECONNABORTED,
                     config,
                     req
                   )
@@ -640,10 +604,7 @@ class HttpAdapter {
                       totalResponseBytes += chunk.length
 
                       // make sure the content length is not over the maxContentLength if specified
-                      if (
-                        config.maxContentLength > -1 &&
-                        totalResponseBytes > config.maxContentLength
-                      ) {
+                      if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
                         // stream.destroy() emit aborted event before calling reject() on Node.js v16
                         _.rejected = true
                         stream.destroy()
@@ -680,10 +641,7 @@ class HttpAdapter {
                   // 数据传输结束
                   stream.on('end', function handleStreamEnd() {
                     try {
-                      let responseData =
-                        responseBuffer.length === 1
-                          ? responseBuffer[0]
-                          : Buffer.concat(responseBuffer)
+                      let responseData = responseBuffer.length === 1 ? responseBuffer[0] : Buffer.concat(responseBuffer)
                       if (responseType !== 'arraybuffer') {
                         responseData = responseData.toString(responseEncoding)
                         if (!responseEncoding || responseEncoding === 'utf8') {
@@ -739,7 +697,7 @@ class HttpAdapter {
 
       _.done(R)
     } catch (e) {
-      log.error(e, 'request')
+      log.err(e, 'request catch')
       _.done(e, true)
       throw e
     }

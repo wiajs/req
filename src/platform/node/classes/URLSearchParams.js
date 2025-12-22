@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
-import url from 'node:url';
-export default url.URLSearchParams;
+import url from 'url'
+export default url.URLSearchParams
