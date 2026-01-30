@@ -237,8 +237,8 @@ function findKey$1(obj, key) {
     return null;
 }
 const _global$1 = (()=>{
-    /*eslint no-undef:0*/ if (typeof globalThis !== "undefined") return globalThis;
-    return typeof self !== "undefined" ? self : typeof window !== 'undefined' ? window : global;
+    /*eslint no-undef:0*/ if (typeof globalThis !== 'undefined') return globalThis;
+    return typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global;
 })();
 const isContextDefined$1 = (context)=>!isUndefined$1(context) && context !== _global$1;
 /**
@@ -306,7 +306,7 @@ const isContextDefined$1 = (context)=>!isUndefined$1(context) && context !== _gl
  *
  * @returns {string} content value without BOM
  */ const stripBOM$1 = (content)=>{
-    if (content.charCodeAt(0) === 0xFEFF) {
+    if (content.charCodeAt(0) === 0xfeff) {
         content = content.slice(1);
     }
     return content;
@@ -483,7 +483,7 @@ const reduceDescriptors$1 = (obj, reducer)=>{
         }
         if (!descriptor.set) {
             descriptor.set = ()=>{
-                throw Error('Can not rewrite read-only method \'' + name + '\'');
+                throw Error("Can not rewrite read-only method '" + name + "'");
             };
         }
     });
@@ -557,14 +557,14 @@ const _setImmediate$1 = ((setImmediateSupported, postMessageSupported)=>{
         return setImmediate;
     }
     return postMessageSupported ? ((token, callbacks)=>{
-        _global$1.addEventListener("message", ({ source, data })=>{
+        _global$1.addEventListener('message', ({ source, data })=>{
             if (source === _global$1 && data === token) {
                 callbacks.length && callbacks.shift()();
             }
         }, false);
         return (cb)=>{
             callbacks.push(cb);
-            _global$1.postMessage(token, "*");
+            _global$1.postMessage(token, '*');
         };
     })(`axios@${Math.random()}`, []) : (cb)=>setTimeout(cb);
 })(typeof setImmediate === 'function', isFunction$1(_global$1.postMessage));
@@ -1290,8 +1290,8 @@ function findKey(obj, key) {
     return null;
 }
 const _global = (()=>{
-    /*eslint no-undef:0*/ if (typeof globalThis !== "undefined") return globalThis;
-    return typeof self !== "undefined" ? self : typeof window !== 'undefined' ? window : global;
+    /*eslint no-undef:0*/ if (typeof globalThis !== 'undefined') return globalThis;
+    return typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global;
 })();
 const isContextDefined = (context)=>!isUndefined(context) && context !== _global;
 /**
@@ -1359,7 +1359,7 @@ const isContextDefined = (context)=>!isUndefined(context) && context !== _global
  *
  * @returns {string} content value without BOM
  */ const stripBOM = (content)=>{
-    if (content.charCodeAt(0) === 0xFEFF) {
+    if (content.charCodeAt(0) === 0xfeff) {
         content = content.slice(1);
     }
     return content;
@@ -1536,7 +1536,7 @@ const reduceDescriptors = (obj, reducer)=>{
         }
         if (!descriptor.set) {
             descriptor.set = ()=>{
-                throw Error('Can not rewrite read-only method \'' + name + '\'');
+                throw Error("Can not rewrite read-only method '" + name + "'");
             };
         }
     });
@@ -1610,14 +1610,14 @@ const _setImmediate = ((setImmediateSupported, postMessageSupported)=>{
         return setImmediate;
     }
     return postMessageSupported ? ((token, callbacks)=>{
-        _global.addEventListener("message", ({ source, data })=>{
+        _global.addEventListener('message', ({ source, data })=>{
             if (source === _global && data === token) {
                 callbacks.length && callbacks.shift()();
             }
         }, false);
         return (cb)=>{
             callbacks.push(cb);
-            _global.postMessage(token, "*");
+            _global.postMessage(token, '*');
         };
     })(`axios@${Math.random()}`, []) : (cb)=>setTimeout(cb);
 })(typeof setImmediate === 'function', isFunction(_global.postMessage));

@@ -1,23 +1,21 @@
-'use strict';
-
-import bind from './helpers/bind.js';
+import bind from './helpers/bind.js'
 
 // utils is a library of generic helper functions non-specific to axios
 
-const {toString} = Object.prototype;
-const {getPrototypeOf} = Object;
+const {toString} = Object.prototype
+const {getPrototypeOf} = Object
 
 const kindOf = (cache => thing => {
-  const str = toString.call(thing);
-  return cache[str] || (cache[str] = str.slice(8, -1).toLowerCase());
-})(Object.create(null));
+  const str = toString.call(thing)
+  return cache[str] || (cache[str] = str.slice(8, -1).toLowerCase())
+})(Object.create(null))
 
-const kindOfTest = (type) => {
-  type = type.toLowerCase();
-  return (thing) => kindOf(thing) === type
+const kindOfTest = type => {
+  type = type.toLowerCase()
+  return thing => kindOf(thing) === type
 }
 
-const typeOfTest = type => thing => typeof thing === type;
+const typeOfTest = type => thing => typeof thing === type
 
 /**
  * Determine if a value is an Array
@@ -26,7 +24,7 @@ const typeOfTest = type => thing => typeof thing === type;
  *
  * @returns {boolean} True if value is an Array, otherwise false
  */
-const {isArray} = Array;
+const {isArray} = Array
 
 /**
  * Determine if a value is undefined
@@ -35,7 +33,7 @@ const {isArray} = Array;
  *
  * @returns {boolean} True if the value is undefined, otherwise false
  */
-const isUndefined = typeOfTest('undefined');
+const isUndefined = typeOfTest('undefined')
 
 /**
  * Determine if a value is a Buffer
@@ -45,8 +43,14 @@ const isUndefined = typeOfTest('undefined');
  * @returns {boolean} True if value is a Buffer, otherwise false
  */
 function isBuffer(val) {
-  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor)
-    && isFunction(val.constructor.isBuffer) && val.constructor.isBuffer(val);
+  return (
+    val !== null &&
+    !isUndefined(val) &&
+    val.constructor !== null &&
+    !isUndefined(val.constructor) &&
+    isFunction(val.constructor.isBuffer) &&
+    val.constructor.isBuffer(val)
+  )
 }
 
 /**
@@ -56,8 +60,7 @@ function isBuffer(val) {
  *
  * @returns {boolean} True if value is an ArrayBuffer, otherwise false
  */
-const isArrayBuffer = kindOfTest('ArrayBuffer');
-
+const isArrayBuffer = kindOfTest('ArrayBuffer')
 
 /**
  * Determine if a value is a view on an ArrayBuffer
@@ -67,13 +70,13 @@ const isArrayBuffer = kindOfTest('ArrayBuffer');
  * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
  */
 function isArrayBufferView(val) {
-  let result;
-  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
-    result = ArrayBuffer.isView(val);
+  let result
+  if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView) {
+    result = ArrayBuffer.isView(val)
   } else {
-    result = (val) && (val.buffer) && (isArrayBuffer(val.buffer));
+    result = val && val.buffer && isArrayBuffer(val.buffer)
   }
-  return result;
+  return result
 }
 
 /**
@@ -83,7 +86,7 @@ function isArrayBufferView(val) {
  *
  * @returns {boolean} True if value is a String, otherwise false
  */
-const isString = typeOfTest('string');
+const isString = typeOfTest('string')
 
 /**
  * Determine if a value is a Function
@@ -91,7 +94,7 @@ const isString = typeOfTest('string');
  * @param {*} val The value to test
  * @returns {boolean} True if value is a Function, otherwise false
  */
-const isFunction = typeOfTest('function');
+const isFunction = typeOfTest('function')
 
 /**
  * Determine if a value is a Number
@@ -100,7 +103,7 @@ const isFunction = typeOfTest('function');
  *
  * @returns {boolean} True if value is a Number, otherwise false
  */
-const isNumber = typeOfTest('number');
+const isNumber = typeOfTest('number')
 
 /**
  * Determine if a value is an Object
@@ -109,7 +112,7 @@ const isNumber = typeOfTest('number');
  *
  * @returns {boolean} True if value is an Object, otherwise false
  */
-const isObject = (thing) => thing !== null && typeof thing === 'object';
+const isObject = thing => thing !== null && typeof thing === 'object'
 
 /**
  * Determine if a value is a Boolean
@@ -117,7 +120,7 @@ const isObject = (thing) => thing !== null && typeof thing === 'object';
  * @param {*} thing The value to test
  * @returns {boolean} True if value is a Boolean, otherwise false
  */
-const isBoolean = thing => thing === true || thing === false;
+const isBoolean = thing => thing === true || thing === false
 
 /**
  * Determine if a value is a plain Object
@@ -126,13 +129,17 @@ const isBoolean = thing => thing === true || thing === false;
  *
  * @returns {boolean} True if value is a plain Object, otherwise false
  */
-const isPlainObject = (val) => {
+const isPlainObject = val => {
   if (kindOf(val) !== 'object') {
-    return false;
+    return false
   }
 
-  const prototype = getPrototypeOf(val);
-  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in val) && !(Symbol.iterator in val);
+  const prototype = getPrototypeOf(val)
+  return (
+    (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) &&
+    !(Symbol.toStringTag in val) &&
+    !(Symbol.iterator in val)
+  )
 }
 
 /**
@@ -142,7 +149,7 @@ const isPlainObject = (val) => {
  *
  * @returns {boolean} True if value is a Date, otherwise false
  */
-const isDate = kindOfTest('Date');
+const isDate = kindOfTest('Date')
 
 /**
  * Determine if a value is a File
@@ -151,7 +158,7 @@ const isDate = kindOfTest('Date');
  *
  * @returns {boolean} True if value is a File, otherwise false
  */
-const isFile = kindOfTest('File');
+const isFile = kindOfTest('File')
 
 /**
  * Determine if a value is a Blob
@@ -160,7 +167,7 @@ const isFile = kindOfTest('File');
  *
  * @returns {boolean} True if value is a Blob, otherwise false
  */
-const isBlob = kindOfTest('Blob');
+const isBlob = kindOfTest('Blob')
 
 /**
  * Determine if a value is a FileList
@@ -169,7 +176,7 @@ const isBlob = kindOfTest('Blob');
  *
  * @returns {boolean} True if value is a File, otherwise false
  */
-const isFileList = kindOfTest('FileList');
+const isFileList = kindOfTest('FileList')
 
 /**
  * Determine if a value is a Stream
@@ -178,7 +185,7 @@ const isFileList = kindOfTest('FileList');
  *
  * @returns {boolean} True if value is a Stream, otherwise false
  */
-const isStream = (val) => isObject(val) && isFunction(val.pipe);
+const isStream = val => isObject(val) && isFunction(val.pipe)
 
 /**
  * Determine if a value is a FormData
@@ -187,16 +194,15 @@ const isStream = (val) => isObject(val) && isFunction(val.pipe);
  *
  * @returns {boolean} True if value is an FormData, otherwise false
  */
-const isFormData = (thing) => {
-  let kind;
-  return thing && (
-    (typeof FormData === 'function' && thing instanceof FormData) || (
-      isFunction(thing.append) && (
-        (kind = kindOf(thing)) === 'formdata' ||
-        // detect form-data instance
-        (kind === 'object' && isFunction(thing.toString) && thing.toString() === '[object FormData]')
-      )
-    )
+const isFormData = thing => {
+  let kind
+  return (
+    thing &&
+    ((typeof FormData === 'function' && thing instanceof FormData) ||
+      (isFunction(thing.append) &&
+        ((kind = kindOf(thing)) === 'formdata' ||
+          // detect form-data instance
+          (kind === 'object' && isFunction(thing.toString) && thing.toString() === '[object FormData]'))))
   )
 }
 
@@ -207,9 +213,11 @@ const isFormData = (thing) => {
  *
  * @returns {boolean} True if value is a URLSearchParams object, otherwise false
  */
-const isURLSearchParams = kindOfTest('URLSearchParams');
+const isURLSearchParams = kindOfTest('URLSearchParams')
 
-const [isReadableStream, isRequest, isResponse, isHeaders] = ['ReadableStream', 'Request', 'Response', 'Headers'].map(kindOfTest);
+const [isReadableStream, isRequest, isResponse, isHeaders] = ['ReadableStream', 'Request', 'Response', 'Headers'].map(
+  kindOfTest
+)
 
 /**
  * Trim excess whitespace off the beginning and end of a string
@@ -218,8 +226,7 @@ const [isReadableStream, isRequest, isResponse, isHeaders] = ['ReadableStream', 
  *
  * @returns {String} The String freed of excess whitespace
  */
-const trim = (str) => str.trim ?
-  str.trim() : str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+const trim = str => (str.trim ? str.trim() : str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''))
 
 /**
  * Iterate over an Array or an Object invoking a function for each item.
@@ -239,57 +246,57 @@ const trim = (str) => str.trim ?
 function forEach(obj, fn, {allOwnKeys = false} = {}) {
   // Don't bother if no value provided
   if (obj === null || typeof obj === 'undefined') {
-    return;
+    return
   }
 
-  let i;
-  let l;
+  let i
+  let l
 
   // Force an array if not already something iterable
   if (typeof obj !== 'object') {
     /*eslint no-param-reassign:0*/
-    obj = [obj];
+    obj = [obj]
   }
 
   if (isArray(obj)) {
     // Iterate over array values
     for (i = 0, l = obj.length; i < l; i++) {
-      fn.call(null, obj[i], i, obj);
+      fn.call(null, obj[i], i, obj)
     }
   } else {
     // Iterate over object keys
-    const keys = allOwnKeys ? Object.getOwnPropertyNames(obj) : Object.keys(obj);
-    const len = keys.length;
-    let key;
+    const keys = allOwnKeys ? Object.getOwnPropertyNames(obj) : Object.keys(obj)
+    const len = keys.length
+    let key
 
     for (i = 0; i < len; i++) {
-      key = keys[i];
-      fn.call(null, obj[key], key, obj);
+      key = keys[i]
+      fn.call(null, obj[key], key, obj)
     }
   }
 }
 
 function findKey(obj, key) {
-  key = key.toLowerCase();
-  const keys = Object.keys(obj);
-  let i = keys.length;
-  let _key;
+  key = key.toLowerCase()
+  const keys = Object.keys(obj)
+  let i = keys.length
+  let _key
   while (i-- > 0) {
-    _key = keys[i];
+    _key = keys[i]
     if (key === _key.toLowerCase()) {
-      return _key;
+      return _key
     }
   }
-  return null;
+  return null
 }
 
 const _global = (() => {
   /*eslint no-undef:0*/
-  if (typeof globalThis !== "undefined") return globalThis;
-  return typeof self !== "undefined" ? self : (typeof window !== 'undefined' ? window : global)
-})();
+  if (typeof globalThis !== 'undefined') return globalThis
+  return typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global
+})()
 
-const isContextDefined = (context) => !isUndefined(context) && context !== _global;
+const isContextDefined = context => !isUndefined(context) && context !== _global
 
 /**
  * Accepts varargs expecting each argument to be an object, then
@@ -310,25 +317,25 @@ const isContextDefined = (context) => !isUndefined(context) && context !== _glob
  * @returns {Object} Result of all merge properties
  */
 function merge(/* obj1, obj2, obj3, ... */) {
-  const {caseless} = isContextDefined(this) && this || {};
-  const result = {};
+  const {caseless} = (isContextDefined(this) && this) || {}
+  const result = {}
   const assignValue = (val, key) => {
-    const targetKey = caseless && findKey(result, key) || key;
+    const targetKey = (caseless && findKey(result, key)) || key
     if (isPlainObject(result[targetKey]) && isPlainObject(val)) {
-      result[targetKey] = merge(result[targetKey], val);
+      result[targetKey] = merge(result[targetKey], val)
     } else if (isPlainObject(val)) {
-      result[targetKey] = merge({}, val);
+      result[targetKey] = merge({}, val)
     } else if (isArray(val)) {
-      result[targetKey] = val.slice();
+      result[targetKey] = val.slice()
     } else {
-      result[targetKey] = val;
+      result[targetKey] = val
     }
   }
 
   for (let i = 0, l = arguments.length; i < l; i++) {
-    arguments[i] && forEach(arguments[i], assignValue);
+    arguments[i] && forEach(arguments[i], assignValue)
   }
-  return result;
+  return result
 }
 
 /**
@@ -342,14 +349,18 @@ function merge(/* obj1, obj2, obj3, ... */) {
  * @returns {Object} The resulting value of object a
  */
 const extend = (a, b, thisArg, {allOwnKeys} = {}) => {
-  forEach(b, (val, key) => {
+  forEach(
+    b,
+    (val, key) => {
       if (thisArg && isFunction(val)) {
-        a[key] = bind(val, thisArg);
+        a[key] = bind(val, thisArg)
       } else {
-        a[key] = val;
+        a[key] = val
       }
-  }, {allOwnKeys});
-  return a;
+    },
+    {allOwnKeys}
+  )
+  return a
 }
 
 /**
@@ -359,11 +370,11 @@ const extend = (a, b, thisArg, {allOwnKeys} = {}) => {
  *
  * @returns {string} content value without BOM
  */
-const stripBOM = (content) => {
-  if (content.charCodeAt(0) === 0xFEFF) {
-    content = content.slice(1);
+const stripBOM = content => {
+  if (content.charCodeAt(0) === 0xfeff) {
+    content = content.slice(1)
   }
-  return content;
+  return content
 }
 
 /**
@@ -376,12 +387,12 @@ const stripBOM = (content) => {
  * @returns {void}
  */
 const inherits = (constructor, superConstructor, props, descriptors) => {
-  constructor.prototype = Object.create(superConstructor.prototype, descriptors);
-  constructor.prototype.constructor = constructor;
+  constructor.prototype = Object.create(superConstructor.prototype, descriptors)
+  constructor.prototype.constructor = constructor
   Object.defineProperty(constructor, 'super', {
-    value: superConstructor.prototype
-  });
-  props && Object.assign(constructor.prototype, props);
+    value: superConstructor.prototype,
+  })
+  props && Object.assign(constructor.prototype, props)
 }
 
 /**
@@ -394,29 +405,29 @@ const inherits = (constructor, superConstructor, props, descriptors) => {
  * @returns {Object}
  */
 const toFlatObject = (sourceObj, destObj, filter, propFilter) => {
-  let props;
-  let i;
-  let prop;
-  const merged = {};
+  let props
+  let i
+  let prop
+  const merged = {}
 
-  destObj = destObj || {};
+  destObj = destObj || {}
   // eslint-disable-next-line no-eq-null,eqeqeq
-  if (sourceObj == null) return destObj;
+  if (sourceObj == null) return destObj
 
   do {
-    props = Object.getOwnPropertyNames(sourceObj);
-    i = props.length;
+    props = Object.getOwnPropertyNames(sourceObj)
+    i = props.length
     while (i-- > 0) {
-      prop = props[i];
+      prop = props[i]
       if ((!propFilter || propFilter(prop, sourceObj, destObj)) && !merged[prop]) {
-        destObj[prop] = sourceObj[prop];
-        merged[prop] = true;
+        destObj[prop] = sourceObj[prop]
+        merged[prop] = true
       }
     }
-    sourceObj = filter !== false && getPrototypeOf(sourceObj);
-  } while (sourceObj && (!filter || filter(sourceObj, destObj)) && sourceObj !== Object.prototype);
+    sourceObj = filter !== false && getPrototypeOf(sourceObj)
+  } while (sourceObj && (!filter || filter(sourceObj, destObj)) && sourceObj !== Object.prototype)
 
-  return destObj;
+  return destObj
 }
 
 /**
@@ -429,15 +440,14 @@ const toFlatObject = (sourceObj, destObj, filter, propFilter) => {
  * @returns {boolean}
  */
 const endsWith = (str, searchString, position) => {
-  str = String(str);
+  str = String(str)
   if (position === undefined || position > str.length) {
-    position = str.length;
+    position = str.length
   }
-  position -= searchString.length;
-  const lastIndex = str.indexOf(searchString, position);
-  return lastIndex !== -1 && lastIndex === position;
+  position -= searchString.length
+  const lastIndex = str.indexOf(searchString, position)
+  return lastIndex !== -1 && lastIndex === position
 }
-
 
 /**
  * Returns new array from array like object or null if failed
@@ -446,16 +456,16 @@ const endsWith = (str, searchString, position) => {
  *
  * @returns {?Array}
  */
-const toArray = (thing) => {
-  if (!thing) return null;
-  if (isArray(thing)) return thing;
-  let i = thing.length;
-  if (!isNumber(i)) return null;
-  const arr = new Array(i);
+const toArray = thing => {
+  if (!thing) return null
+  if (isArray(thing)) return thing
+  let i = thing.length
+  if (!isNumber(i)) return null
+  const arr = new Array(i)
   while (i-- > 0) {
-    arr[i] = thing[i];
+    arr[i] = thing[i]
   }
-  return arr;
+  return arr
 }
 
 /**
@@ -470,9 +480,9 @@ const toArray = (thing) => {
 const isTypedArray = (TypedArray => {
   // eslint-disable-next-line func-names
   return thing => {
-    return TypedArray && thing instanceof TypedArray;
-  };
-})(typeof Uint8Array !== 'undefined' && getPrototypeOf(Uint8Array));
+    return TypedArray && thing instanceof TypedArray
+  }
+})(typeof Uint8Array !== 'undefined' && getPrototypeOf(Uint8Array))
 
 /**
  * For each entry in the object, call the function with the key and value.
@@ -483,15 +493,15 @@ const isTypedArray = (TypedArray => {
  * @returns {void}
  */
 const forEachEntry = (obj, fn) => {
-  const generator = obj && obj[Symbol.iterator];
+  const generator = obj && obj[Symbol.iterator]
 
-  const iterator = generator.call(obj);
+  const iterator = generator.call(obj)
 
-  let result;
+  let result
 
   while ((result = iterator.next()) && !result.done) {
-    const pair = result.value;
-    fn.call(obj, pair[0], pair[1]);
+    const pair = result.value
+    fn.call(obj, pair[0], pair[1])
   }
 }
 
@@ -504,29 +514,31 @@ const forEachEntry = (obj, fn) => {
  * @returns {Array<boolean>}
  */
 const matchAll = (regExp, str) => {
-  let matches;
-  const arr = [];
+  let matches
+  const arr = []
 
   while ((matches = regExp.exec(str)) !== null) {
-    arr.push(matches);
+    arr.push(matches)
   }
 
-  return arr;
+  return arr
 }
 
 /* Checking if the kindOfTest function returns true when passed an HTMLFormElement. */
-const isHTMLForm = kindOfTest('HTMLFormElement');
+const isHTMLForm = kindOfTest('HTMLFormElement')
 
 const toCamelCase = str => {
-  return str.toLowerCase().replace(/[-_\s]([a-z\d])(\w*)/g,
-    function replacer(m, p1, p2) {
-    return p1.toUpperCase() + p2;
-    }
-  );
-};
+  return str.toLowerCase().replace(/[-_\s]([a-z\d])(\w*)/g, function replacer(m, p1, p2) {
+    return p1.toUpperCase() + p2
+  })
+}
 
 /* Creating a function that will check if an object has a property. */
-const hasOwnProperty = (({hasOwnProperty}) => (obj, prop) => hasOwnProperty.call(obj, prop))(Object.prototype);
+const hasOwnProperty = (
+  ({hasOwnProperty}) =>
+  (obj, prop) =>
+    hasOwnProperty.call(obj, prop)
+)(Object.prototype)
 
 /**
  * Determine if a value is a RegExp object
@@ -535,20 +547,20 @@ const hasOwnProperty = (({hasOwnProperty}) => (obj, prop) => hasOwnProperty.call
  *
  * @returns {boolean} True if value is a RegExp object, otherwise false
  */
-const isRegExp = kindOfTest('RegExp');
+const isRegExp = kindOfTest('RegExp')
 
 const reduceDescriptors = (obj, reducer) => {
-  const descriptors = Object.getOwnPropertyDescriptors(obj);
-  const reducedDescriptors = {};
+  const descriptors = Object.getOwnPropertyDescriptors(obj)
+  const reducedDescriptors = {}
 
   forEach(descriptors, (descriptor, name) => {
-    let ret;
+    let ret
     if ((ret = reducer(descriptor, name, obj)) !== false) {
-      reducedDescriptors[name] = ret || descriptor;
+      reducedDescriptors[name] = ret || descriptor
     }
-  });
+  })
 
-  Object.defineProperties(obj, reducedDescriptors);
+  Object.defineProperties(obj, reducedDescriptors)
 }
 
 /**
@@ -556,70 +568,70 @@ const reduceDescriptors = (obj, reducer) => {
  * @param {Object} obj
  */
 
-const freezeMethods = (obj) => {
+const freezeMethods = obj => {
   reduceDescriptors(obj, (descriptor, name) => {
     // skip restricted props in strict mode
     if (isFunction(obj) && ['arguments', 'caller', 'callee'].indexOf(name) !== -1) {
-      return false;
+      return false
     }
 
-    const value = obj[name];
+    const value = obj[name]
 
-    if (!isFunction(value)) return;
+    if (!isFunction(value)) return
 
-    descriptor.enumerable = false;
+    descriptor.enumerable = false
 
     if ('writable' in descriptor) {
-      descriptor.writable = false;
-      return;
+      descriptor.writable = false
+      return
     }
 
     if (!descriptor.set) {
       descriptor.set = () => {
-        throw Error('Can not rewrite read-only method \'' + name + '\'');
-      };
+        throw Error("Can not rewrite read-only method '" + name + "'")
+      }
     }
-  });
+  })
 }
 
 const toObjectSet = (arrayOrString, delimiter) => {
-  const obj = {};
+  const obj = {}
 
-  const define = (arr) => {
+  const define = arr => {
     arr.forEach(value => {
-      obj[value] = true;
-    });
+      obj[value] = true
+    })
   }
 
-  isArray(arrayOrString) ? define(arrayOrString) : define(String(arrayOrString).split(delimiter));
+  isArray(arrayOrString) ? define(arrayOrString) : define(String(arrayOrString).split(delimiter))
 
-  return obj;
+  return obj
 }
 
 const noop = () => {}
 
 const toFiniteNumber = (value, defaultValue) => {
-  return value != null && Number.isFinite(value = +value) ? value : defaultValue;
+  return value != null && Number.isFinite((value = +value)) ? value : defaultValue
 }
 
 const ALPHA = 'abcdefghijklmnopqrstuvwxyz'
 
-const DIGIT = '0123456789';
+const DIGIT = '0123456789'
 
 const ALPHABET = {
   DIGIT,
   ALPHA,
-  ALPHA_DIGIT: ALPHA + ALPHA.toUpperCase() + DIGIT
+  ALPHA_DIGIT: ALPHA + ALPHA.toUpperCase() + DIGIT,
 }
 
 const generateString = (size = 16, alphabet = ALPHABET.ALPHA_DIGIT) => {
-  let str = '';
-  const {length} = alphabet;
+  let str = ''
+  const {length} = alphabet
   while (size--) {
-    str += alphabet[Math.random() * length|0]
+    str += alphabet[(Math.random() * length) | 0]
   }
 
-  return str;
+  return str
 }
 
 /**
@@ -630,90 +642,92 @@ const generateString = (size = 16, alphabet = ALPHABET.ALPHA_DIGIT) => {
  * @returns {boolean}
  */
 function isSpecCompliantForm(thing) {
-  return !!(thing && isFunction(thing.append) && thing[Symbol.toStringTag] === 'FormData' && thing[Symbol.iterator]);
+  return !!(thing && isFunction(thing.append) && thing[Symbol.toStringTag] === 'FormData' && thing[Symbol.iterator])
 }
 
-const toJSONObject = (obj) => {
-  const stack = new Array(10);
+const toJSONObject = obj => {
+  const stack = new Array(10)
 
   const visit = (source, i) => {
-
     if (isObject(source)) {
       if (stack.indexOf(source) >= 0) {
-        return;
+        return
       }
 
       if (!('toJSON' in source)) {
-        stack[i] = source;
-        const target = isArray(source) ? [] : {};
+        stack[i] = source
+        const target = isArray(source) ? [] : {}
 
         forEach(source, (value, key) => {
-          const reducedValue = visit(value, i + 1);
-          !isUndefined(reducedValue) && (target[key] = reducedValue);
-        });
+          const reducedValue = visit(value, i + 1)
+          !isUndefined(reducedValue) && (target[key] = reducedValue)
+        })
 
-        stack[i] = undefined;
+        stack[i] = undefined
 
-        return target;
+        return target
       }
     }
 
-    return source;
+    return source
   }
 
-  return visit(obj, 0);
+  return visit(obj, 0)
 }
 
-const isAsyncFn = kindOfTest('AsyncFunction');
+const isAsyncFn = kindOfTest('AsyncFunction')
 
-const isThenable = (thing) =>
-  thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch);
+const isThenable = thing =>
+  thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch)
 
 // original code
 // https://github.com/DigitalBrainJS/AxiosPromise/blob/16deab13710ec09779922131f3fa5954320f83ab/lib/utils.js#L11-L34
 
 const _setImmediate = ((setImmediateSupported, postMessageSupported) => {
   if (setImmediateSupported) {
-    return setImmediate;
+    return setImmediate
   }
 
-  return postMessageSupported ? ((token, callbacks) => {
-    _global.addEventListener("message", ({source, data}) => {
-      if (source === _global && data === token) {
-        callbacks.length && callbacks.shift()();
-}
-    }, false);
+  return postMessageSupported
+    ? ((token, callbacks) => {
+        _global.addEventListener(
+          'message',
+          ({source, data}) => {
+            if (source === _global && data === token) {
+              callbacks.length && callbacks.shift()()
+            }
+          },
+          false
+        )
 
-    return (cb) => {
-      callbacks.push(cb);
-      _global.postMessage(token, "*");
-    }
-  })(`axios@${Math.random()}`, []) : (cb) => setTimeout(cb);
-})(
-  typeof setImmediate === 'function',
-  isFunction(_global.postMessage)
-);
+        return cb => {
+          callbacks.push(cb)
+          _global.postMessage(token, '*')
+        }
+      })(`axios@${Math.random()}`, [])
+    : cb => setTimeout(cb)
+})(typeof setImmediate === 'function', isFunction(_global.postMessage))
 
-const asap = typeof queueMicrotask !== 'undefined' ?
-  queueMicrotask.bind(_global) : ( typeof process !== 'undefined' && process.nextTick || _setImmediate);
-
+const asap =
+  typeof queueMicrotask !== 'undefined'
+    ? queueMicrotask.bind(_global)
+    : (typeof process !== 'undefined' && process.nextTick) || _setImmediate
 
 function createErrorType(code, message, baseClass) {
   // Create constructor
   function CustomError(properties) {
-    Error.captureStackTrace(this, this.constructor);
-    Object.assign(this, properties || {});
-    this.code = code;
-    this.message = this.cause ? `${message}: ${this.cause.message}` : message;
+    Error.captureStackTrace(this, this.constructor)
+    Object.assign(this, properties || {})
+    this.code = code
+    this.message = this.cause ? `${message}: ${this.cause.message}` : message
   }
 
   // Attach constructor and set default properties
-  CustomError.prototype = new (baseClass || Error)();
-  CustomError.prototype.constructor = CustomError;
-  CustomError.prototype.name = `Error [${code}]`;
-  return CustomError;
+  CustomError.prototype = new (baseClass || Error)()
+  CustomError.prototype.constructor = CustomError
+  CustomError.prototype.name = `Error [${code}]`
+  return CustomError
 }
-
 
 // *********************
 
@@ -775,5 +789,5 @@ export default {
   isThenable,
   setImmediate: _setImmediate,
   asap,
-  createErrorType
-};
+  createErrorType,
+}

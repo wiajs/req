@@ -248,8 +248,8 @@ function findKey(obj, key) {
     return null;
 }
 const _global = (()=>{
-    /*eslint no-undef:0*/ if (typeof globalThis !== "undefined") return globalThis;
-    return typeof self !== "undefined" ? self : typeof window !== 'undefined' ? window : global;
+    /*eslint no-undef:0*/ if (typeof globalThis !== 'undefined') return globalThis;
+    return typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global;
 })();
 const isContextDefined = (context)=>!isUndefined(context) && context !== _global;
 /**
@@ -317,7 +317,7 @@ const isContextDefined = (context)=>!isUndefined(context) && context !== _global
  *
  * @returns {string} content value without BOM
  */ const stripBOM = (content)=>{
-    if (content.charCodeAt(0) === 0xFEFF) {
+    if (content.charCodeAt(0) === 0xfeff) {
         content = content.slice(1);
     }
     return content;
@@ -494,7 +494,7 @@ const reduceDescriptors = (obj, reducer)=>{
         }
         if (!descriptor.set) {
             descriptor.set = ()=>{
-                throw Error('Can not rewrite read-only method \'' + name + '\'');
+                throw Error("Can not rewrite read-only method '" + name + "'");
             };
         }
     });
@@ -568,14 +568,14 @@ const _setImmediate = ((setImmediateSupported, postMessageSupported)=>{
         return setImmediate;
     }
     return postMessageSupported ? ((token, callbacks)=>{
-        _global.addEventListener("message", ({ source, data })=>{
+        _global.addEventListener('message', ({ source, data })=>{
             if (source === _global && data === token) {
                 callbacks.length && callbacks.shift()();
             }
         }, false);
         return (cb)=>{
             callbacks.push(cb);
-            _global.postMessage(token, "*");
+            _global.postMessage(token, '*');
         };
     })(`axios@${Math.random()}`, []) : (cb)=>setTimeout(cb);
 })(typeof setImmediate === 'function', isFunction(_global.postMessage));
@@ -2249,7 +2249,6 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
         const protocol = parsed.protocol || supportedProtocols[0];
         _.protocol = protocol;
         if (protocol === 'data:' && method !== 'GET') {
-            // throw error
             const response = {
                 status: 405,
                 statusText: 'method not allowed',
@@ -2368,11 +2367,11 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
             http: config.httpAgent
         };
         if (config.httpsAgent) options.agents.https = config.httpsAgent;
-        // ! 配置了 agent,使用Agent，否则使用缺省 agent，agents 优于agent
+        // ✅ axios 侧一般传 agents（用于重定向按协议选 agent）
         if (config.agents) options.agents = config.agents;
         else if (config.agent) options.agents = new agent.Agent(config.agent);
         const isHttpsRequest = isHttps.test(options.protocol);
-        // agents 优先于 agent，在 request中根据协议从 agents 中获取
+        // agents 优先于 agent（Node request 内部会按协议从 agents 取）:contentReference[oaicite:4]{index=4}
         options.agent = isHttpsRequest ? config.httpsAgent : config.httpAgent;
         // cacheable-lookup integration hotfix
         if (!utils$1.isUndefined(lookup)) options.lookup = lookup;
@@ -2431,9 +2430,7 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
                 }
                 if (responseType === 'text') {
                     convertedData = convertedData.toString(responseEncoding);
-                    if (!responseEncoding || responseEncoding === 'utf8') {
-                        convertedData = utils$1.stripBOM(convertedData);
-                    }
+                    if (!responseEncoding || responseEncoding === 'utf8') convertedData = utils$1.stripBOM(convertedData);
                 } else if (responseType === 'stream') {
                     convertedData = stream.Readable.from(convertedData);
                 }
@@ -2461,8 +2458,6 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
                     options.stream = (_config_stream = config.stream) != null ? _config_stream : false;
                     var _config_decompress;
                     options.decompress = (_config_decompress = config.decompress) != null ? _config_decompress : true;
-                    // Create the request，promise false: return stream
-                    // log({transport, options}, 'request')
                     const req = transport ? transport.request(options) : request(options);
                     if (!req) return reject(new AxiosError('Request failed.', AxiosError.ERR_BAD_REQUEST, config));
                     _.req = req;
@@ -2503,9 +2498,7 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
                                 if (_.isDone) return;
                                 let timeoutErrorMessage = config.timeout ? `timeout of ${config.timeout}ms exceeded` : 'timeout exceeded';
                                 const transitional = config.transitional || transitionalDefaults;
-                                if (config.timeoutErrorMessage) {
-                                    timeoutErrorMessage = config.timeoutErrorMessage;
-                                }
+                                if (config.timeoutErrorMessage) timeoutErrorMessage = config.timeoutErrorMessage;
                                 reject(new AxiosError(timeoutErrorMessage, transitional.clarifyTimeoutError ? AxiosError.ETIMEDOUT : AxiosError.ECONNABORTED, config, req));
                                 abort();
                             });
@@ -2519,8 +2512,8 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
                         // 非stream模式，等待响应数据，返回数据
                         req.on('response', /**
                * @param {*} res 原数据流
-               * @param {*} stream 解压等处理后的数据流
-               */ (res, stream)=>{
+               * @param {*} stream2 解压等处理后的数据流
+               */ (res, stream2)=>{
                             if (req.destroyed) return;
                             // 'transfer-encoding': 'chunked'时，无content-length，axios v1.2 不能自动解压
                             const responseLength = +res.headers['content-length'];
@@ -2540,36 +2533,36 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
                             };
                             // 直接返回 responseStream
                             if (responseType === 'stream') {
-                                response.data = stream;
+                                response.data = stream2;
                                 settle(resolve, reject, response);
                             } else {
                                 // 处理 responseStream
                                 /** @type {*} */ const responseBuffer = [];
                                 let totalResponseBytes = 0;
                                 // 处理数据
-                                stream.on('data', /** @param {*} chunk */ (chunk)=>{
+                                stream2.on('data', /** @param {*} chunk */ (chunk)=>{
                                     responseBuffer.push(chunk);
                                     totalResponseBytes += chunk.length;
                                     // make sure the content length is not over the maxContentLength if specified
                                     if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
                                         // stream.destroy() emit aborted event before calling reject() on Node.js v16
                                         _.rejected = true;
-                                        stream.destroy();
+                                        stream2.destroy();
                                         reject(new AxiosError(`maxContentLength size of ${config.maxContentLength} exceeded`, AxiosError.ERR_BAD_RESPONSE, config, lastRequest));
                                     }
                                 });
-                                stream.on('aborted', function handlerStreamAborted() {
+                                stream2.on('aborted', function handlerStreamAborted() {
                                     if (_.rejected) return;
                                     const err = new AxiosError(`maxContentLength size of ${config.maxContentLength} exceeded`, AxiosError.ERR_BAD_RESPONSE, config, lastRequest);
-                                    stream.destroy(err);
+                                    stream2.destroy(err);
                                     reject(err);
                                 });
-                                stream.on('error', function handleStreamError(err) {
+                                stream2.on('error', function handleStreamError(err) {
                                     if (req.destroyed) return;
                                     reject(AxiosError.from(err, null, config, lastRequest));
                                 });
                                 // 数据传输结束
-                                stream.on('end', function handleStreamEnd() {
+                                stream2.on('end', function handleStreamEnd() {
                                     try {
                                         let responseData = responseBuffer.length === 1 ? responseBuffer[0] : Buffer.concat(responseBuffer);
                                         if (responseType !== 'arraybuffer') {
@@ -2586,9 +2579,9 @@ const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(
                                 });
                             }
                             emitter.once('abort', (err)=>{
-                                if (!stream.destroyed) {
-                                    stream.emit('error', err);
-                                    stream.destroy();
+                                if (!stream2.destroyed) {
+                                    stream2.emit('error', err);
+                                    stream2.destroy();
                                 }
                             });
                         });

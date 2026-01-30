@@ -25,25 +25,10 @@ import readBlob from '../helpers/readBlob.js'
 import platform from '../platform/index.js'
 import utils from '../utils.js'
 
-const px = {host: '114.98.163.61:17813'}
-const agent = {
-  // proxy: `http://${px.host}`, // 高效、隧道
-  proxy: `socks://${px.host}`, // 高效、隧道
-  // 连接复用，目的主机如关闭，则重新连接，连接代理keepAlive需为true
-  keepAlive: true, // 非动态保持连接，再次请求无需重新建立连接，缺省false
-  // 同一目的网址最大并发连接，超过排队，隧道代理或服务器限制并发时需设置，否则报错，默认值：Infinity
-  // maxSockets: 5, // 无连接，并发连接时，此参数无效，转发代理支持并发无需设置或设置并发数
-  // maxFreeSockets: 5, // 同一目的主机空闲最大连接，超过关闭。keepAlive true 时有效。默认值：256
-  // timeout: 10000, // 建立连接时长，缺省 30000
-  rejectUnauthorized: false, // 忽略ssl证书，不安全！
-}
-
 const log = Log({env: `wia:req:${name(import.meta.url)}`})
 
 const isBrotliSupported = utils.isFunction(zlib.createBrotliDecompress)
-
 const isHttps = /https:?/
-
 const supportedProtocols = platform.protocols.map(protocol => `${protocol}:`)
 const isHttpAdapterSupported = typeof process !== 'undefined' && utils.kindOf(process) === 'process'
 
@@ -188,14 +173,7 @@ class HttpAdapter {
     _.protocol = protocol
 
     if (protocol === 'data:' && method !== 'GET') {
-      // throw error
-      const response = {
-        status: 405,
-        statusText: 'method not allowed',
-        headers: {},
-        config,
-      }
-
+      const response = {status: 405, statusText: 'method not allowed', headers: {}, config}
       throw new AxiosError(
         `Request failed with status code ${response.status}`,
         [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4],
@@ -352,12 +330,12 @@ class HttpAdapter {
     if (config.httpAgent) options.agents = {http: config.httpAgent}
     if (config.httpsAgent) options.agents.https = config.httpsAgent
 
-    // ! 配置了 agent,使用Agent，否则使用缺省 agent，agents 优于agent
+    // ✅ axios 侧一般传 agents（用于重定向按协议选 agent）
     if (config.agents) options.agents = config.agents
     else if (config.agent) options.agents = new Agent(config.agent)
 
     const isHttpsRequest = isHttps.test(options.protocol)
-    // agents 优先于 agent，在 request中根据协议从 agents 中获取
+    // agents 优先于 agent（Node request 内部会按协议从 agents 取）:contentReference[oaicite:4]{index=4}
     options.agent = isHttpsRequest ? config.httpsAgent : config.httpAgent
 
     // cacheable-lookup integration hotfix
@@ -419,19 +397,14 @@ class HttpAdapter {
         /** @type {*} */
         let convertedData
         try {
-          convertedData = fromDataURI(config.url, responseType === 'blob', {
-            Blob: config.env?.Blob,
-          })
+          convertedData = fromDataURI(config.url, responseType === 'blob', {Blob: config.env?.Blob})
         } catch (err) {
           throw AxiosError.from(err, AxiosError.ERR_BAD_REQUEST, config)
         }
 
         if (responseType === 'text') {
           convertedData = convertedData.toString(responseEncoding)
-
-          if (!responseEncoding || responseEncoding === 'utf8') {
-            convertedData = utils.stripBOM(convertedData)
-          }
+          if (!responseEncoding || responseEncoding === 'utf8') convertedData = utils.stripBOM(convertedData)
         } else if (responseType === 'stream') {
           convertedData = stream.Readable.from(convertedData)
         }
@@ -471,8 +444,7 @@ class HttpAdapter {
 
           options.stream = config.stream ?? false
           options.decompress = config.decompress ?? true
-          // Create the request，promise false: return stream
-          // log({transport, options}, 'request')
+
           const req = transport ? transport.request(options) : request(options)
 
           if (!req) return reject(new AxiosError('Request failed.', AxiosError.ERR_BAD_REQUEST, config))
@@ -533,9 +505,8 @@ class HttpAdapter {
                   ? `timeout of ${config.timeout}ms exceeded`
                   : 'timeout exceeded'
                 const transitional = config.transitional || transitionalDefaults
-                if (config.timeoutErrorMessage) {
-                  timeoutErrorMessage = config.timeoutErrorMessage
-                }
+                if (config.timeoutErrorMessage) timeoutErrorMessage = config.timeoutErrorMessage
+
                 reject(
                   new AxiosError(
                     timeoutErrorMessage,
@@ -560,9 +531,9 @@ class HttpAdapter {
               'response',
               /**
                * @param {*} res 原数据流
-               * @param {*} stream 解压等处理后的数据流
+               * @param {*} stream2 解压等处理后的数据流
                */
-              (res, stream) => {
+              (res, stream2) => {
                 if (req.destroyed) return
 
                 // 'transfer-encoding': 'chunked'时，无content-length，axios v1.2 不能自动解压
@@ -588,7 +559,7 @@ class HttpAdapter {
 
                 // 直接返回 responseStream
                 if (responseType === 'stream') {
-                  response.data = stream
+                  response.data = stream2
                   settle(resolve, reject, response)
                 } else {
                   // 处理 responseStream
@@ -597,7 +568,7 @@ class HttpAdapter {
                   let totalResponseBytes = 0
 
                   // 处理数据
-                  stream.on(
+                  stream2.on(
                     'data',
                     /** @param {*} chunk */ chunk => {
                       responseBuffer.push(chunk)
@@ -607,7 +578,7 @@ class HttpAdapter {
                       if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
                         // stream.destroy() emit aborted event before calling reject() on Node.js v16
                         _.rejected = true
-                        stream.destroy()
+                        stream2.destroy()
                         reject(
                           new AxiosError(
                             `maxContentLength size of ${config.maxContentLength} exceeded`,
@@ -620,7 +591,7 @@ class HttpAdapter {
                     }
                   )
 
-                  stream.on('aborted', function handlerStreamAborted() {
+                  stream2.on('aborted', function handlerStreamAborted() {
                     if (_.rejected) return
 
                     const err = new AxiosError(
@@ -629,17 +600,17 @@ class HttpAdapter {
                       config,
                       lastRequest
                     )
-                    stream.destroy(err)
+                    stream2.destroy(err)
                     reject(err)
                   })
 
-                  stream.on('error', function handleStreamError(err) {
+                  stream2.on('error', function handleStreamError(err) {
                     if (req.destroyed) return
                     reject(AxiosError.from(err, null, config, lastRequest))
                   })
 
                   // 数据传输结束
-                  stream.on('end', function handleStreamEnd() {
+                  stream2.on('end', function handleStreamEnd() {
                     try {
                       let responseData = responseBuffer.length === 1 ? responseBuffer[0] : Buffer.concat(responseBuffer)
                       if (responseType !== 'arraybuffer') {
@@ -657,9 +628,9 @@ class HttpAdapter {
                 }
 
                 emitter.once('abort', err => {
-                  if (!stream.destroyed) {
-                    stream.emit('error', err)
-                    stream.destroy()
+                  if (!stream2.destroyed) {
+                    stream2.emit('error', err)
+                    stream2.destroy()
                   }
                 })
               }
